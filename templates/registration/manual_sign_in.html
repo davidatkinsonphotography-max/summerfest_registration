@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Sign-In - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="bi bi-person-plus"></i> Manual Sign-In</h3>
+                    <p class="mb-0">For when parents forget their phone or QR codes</p>
+                </div>
+                <div class="card-body">
+                    <!-- Staff Only Notice -->
+                    <div class="alert alert-info">
+                        <i class="bi bi-shield-check"></i> <strong>Staff/Teacher Access Only</strong>
+                        <br>Use this form when parents don't have their QR codes available.
+                    </div>
+
+                    <!-- Step 1: Parent Lookup -->
+                    {% if not parent_profile %}
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="bi bi-search"></i> Step 1: Find Parent</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <label for="{{ form.parent_username.id_for_label }}" class="form-label">
+                                            {{ form.parent_username.label }}
+                                        </label>
+                                        {{ form.parent_username }}
+                                        <div class="form-text">Ask the parent for their login username</div>
+                                        {% if form.parent_username.errors %}
+                                            <div class="text-danger small">{{ form.parent_username.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <button type="submit" name="lookup" class="btn btn-primary btn-lg w-100">
+                                            <i class="bi bi-search"></i> Find Children
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Step 2: Child Selection and Sign-In -->
+                    {% if parent_profile and children %}
+                    <div class="card border-success mt-4">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="bi bi-person-check"></i> Step 2: Sign In Children</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Parent Information -->
+                            <div class="alert alert-success">
+                                <h6><i class="bi bi-person"></i> Parent Found:</h6>
+                                <strong>{{ parent_profile.first_name }} {{ parent_profile.last_name }}</strong> ({{ parent_profile.user.username }})
+                                <br><small>{{ parent_profile.email }} • {{ parent_profile.phone_number }}</small>
+                                {% if parent_profile.payment_account %}
+                                    <br><strong>Account Balance:</strong> ${{ parent_profile.payment_account.balance }}
+                                {% endif %}
+                            </div>
+
+                            <!-- Children Sign-In Form -->
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="username" value="{{ parent_profile.user.username }}">
+                                
+                                <h6><i class="bi bi-people"></i> Select children to sign in:</h6>
+                                
+                                <div class="row">
+                                    {% for child_data in children %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card {% if child_data.is_checked_in %}border-warning{% else %}border-light{% endif %}">
+                                                <div class="card-body">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="child_ids" 
+                                                               value="{{ child_data.child.id }}" id="child_{{ child_data.child.id }}"
+                                                               {% if child_data.is_checked_in %}disabled{% endif %}>
+                                                        <label class="form-check-label" for="child_{{ child_data.child.id }}">
+                                                            <strong>{{ child_data.child.first_name }} {{ child_data.child.last_name }}</strong>
+                                                            <br><small class="text-muted">{{ child_data.child.get_child_class_display }} • DOB: {{ child_data.child.date_of_birth|date:"M j, Y" }}</small>
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    {% if child_data.is_checked_in %}
+                                                        <div class="alert alert-warning small mt-2 mb-0">
+                                                            <i class="bi bi-check-circle"></i> Already signed in today at {{ child_data.today_attendance.time_in|time:"H:i" }}
+                                                        </div>
+                                                    {% else %}
+                                                        <!-- Show child details -->
+                                                        {% if child_data.child.has_dietary_needs %}
+                                                            <div class="alert alert-info small mt-2 mb-1">
+                                                                <i class="bi bi-exclamation-triangle"></i> <strong>Dietary:</strong> {{ child_data.child.dietary_needs_detail }}
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if child_data.child.has_medical_needs %}
+                                                            <div class="alert alert-danger small mt-1 mb-0">
+                                                                <i class="bi bi-heart-pulse"></i> <strong>Medical:</strong> {{ child_data.child.medical_allergy_details }}
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Payment Information -->
+                                {% if parent_profile.payment_account %}
+                                <div class="alert alert-light">
+                                    <h6><i class="bi bi-credit-card"></i> Payment Information:</h6>
+                                    <p class="mb-2">
+                                        <strong>Current Balance:</strong> ${{ parent_profile.payment_account.balance }}
+                                        <br><strong>Pricing:</strong> $6 per sign-in (first few per week), then reduced rates apply
+                                        <br><strong>Daily Family Cap:</strong> Maximum $12 per day per family
+                                    </p>
+                                    {% if parent_profile.payment_account.balance <= 0 %}
+                                        <div class="alert alert-warning small">
+                                            <i class="bi bi-exclamation-triangle"></i> <strong>Low Balance:</strong> This family may need to add funds.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'manual_sign_in' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> New Search
+                                    </a>
+                                    <div>
+                                        <a href="{% url 'payment_lookup' %}?username={{ parent_profile.user.username }}" 
+                                           class="btn btn-outline-info me-2">
+                                            <i class="bi bi-wallet2"></i> View Account
+                                        </a>
+                                        <a href="{% url 'manual_payment' %}" class="btn btn-outline-warning me-2">
+                                            <i class="bi bi-cash-stack"></i> Add Funds
+                                        </a>
+                                        <button type="submit" name="sign_in" class="btn btn-success btn-lg">
+                                            <i class="bi bi-check-circle"></i> Sign In Selected
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if not parent_profile %}
+                    <!-- Instructions -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h5><i class="bi bi-info-circle"></i> Instructions</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>When to Use Manual Sign-In:</h6>
+                            <ul class="small">
+                                <li>Parent forgot their phone at home</li>
+                                <li>Phone battery is dead</li>
+                                <li>QR code is not accessible</li>
+                                <li>Technical issues with the QR scanner</li>
+                            </ul>
+                            
+                            <h6>How to Use:</h6>
+                            <ol class="small">
+                                <li><strong>Get Username:</strong> Ask the parent for their login username</li>
+                                <li><strong>Find Children:</strong> Click "Find Children" to see their registered children</li>
+                                <li><strong>Select Children:</strong> Check the boxes for children attending today</li>
+                                <li><strong>Check Payment:</strong> Verify they have sufficient account balance</li>
+                                <li><strong>Sign In:</strong> Click "Sign In Selected" to complete the process</li>
+                            </ol>
+
+                            <div class="alert alert-warning small mt-3">
+                                <strong>Important:</strong> Payment will be automatically deducted from their account just like QR code sign-in.
+                                If they don't have enough balance, you can use "Add Funds" to record a cash/EFTPOS payment first.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-focus on username input
+document.addEventListener('DOMContentLoaded', function() {
+    const usernameInput = document.getElementById('{{ form.parent_username.id_for_label }}');
+    if (usernameInput) {
+        usernameInput.focus();
+    }
+});
+
+// Select all children by default when parent is found
+{% if parent_profile and children %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Select all available (non-disabled) checkboxes
+    const checkboxes = document.querySelectorAll('input[name="child_ids"]:not(:disabled)');
+    checkboxes.forEach(function(checkbox) {
+        checkbox.checked = true;
+    });
+});
+{% endif %}
+
+// Confirm sign-in action
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (e.submitter && e.submitter.name === 'sign_in') {
+        const selectedChildren = document.querySelectorAll('input[name="child_ids"]:checked');
+        if (selectedChildren.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one child to sign in.');
+            return false;
+        }
+        
+        const childNames = Array.from(selectedChildren).map(function(checkbox) {
+            const label = document.querySelector('label[for="' + checkbox.id + '"]');
+            return label.textContent.trim().split('\n')[0];
+        });
+        
+        const confirmation = confirm('Sign in these children?\n\n' + childNames.join('\n') + '\n\nPayment will be automatically deducted from the account.');
+        
+        if (!confirmation) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show loading state
+        e.submitter.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+        e.submitter.disabled = true;
+    }
+});
+</script>
+{% endblock %}

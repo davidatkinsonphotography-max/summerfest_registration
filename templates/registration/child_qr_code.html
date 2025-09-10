@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}QR Code for {{ child.first_name }} - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white text-center">
+                    <h3 class="mb-0"><i class="bi bi-qr-code"></i> QR Code for {{ child.first_name }}</h3>
+                </div>
+                <div class="card-body text-center">
+                    <h4 class="mb-3">{{ child.first_name }} {{ child.last_name }}</h4>
+                    <p class="text-muted">{{ child.get_child_class_display }}</p>
+                    
+                    {% if child.qr_code_image %}
+                        <div class="qr-code mb-4">
+                            <img src="{{ child.qr_code_image.url }}" alt="QR Code for {{ child.first_name }}" class="img-fluid" style="max-width: 300px;">
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            QR Code is being generated. Please refresh the page in a moment.
+                        </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Instructions:</strong><br>
+                        Present this QR code when you arrive at Summerfest. 
+                        The registration team will scan it to check in {{ child.first_name }}.
+                        You can save this image or take a screenshot for easy access.
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                        {% if child.qr_code_image %}
+                            <a href="{{ child.qr_code_image.url }}" download="summerfest_qr_{{ child.first_name }}_{{ child.last_name }}.png" class="btn btn-outline-success">
+                                <i class="bi bi-download"></i> Download QR Code
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Child Details Summary -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Child Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Name:</strong> {{ child.first_name }} {{ child.last_name }}</p>
+                    <p><strong>Date of Birth:</strong> {{ child.date_of_birth|date:"M j, Y" }}</p>
+                    <p><strong>Gender:</strong> {{ child.get_gender_display }}</p>
+                    <p><strong>Class:</strong> {{ child.get_child_class_display }}</p>
+                    
+                    {% if child.has_dietary_needs %}
+                        <div class="alert alert-warning">
+                            <strong><i class="bi bi-exclamation-triangle"></i> Dietary Needs:</strong><br>
+                            {{ child.dietary_needs_detail }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if child.has_medical_needs %}
+                        <div class="alert alert-danger">
+                            <strong><i class="bi bi-heart-pulse"></i> Medical/Allergy Information:</strong><br>
+                            {{ child.medical_allergy_details }}
+                        </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'edit_child' child.id %}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Edit Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

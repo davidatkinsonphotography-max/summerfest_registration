@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Site Map - Test All Functionality{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="bi bi-map"></i> Site Map & Testing Center</h1>
+            <p class="lead">Complete testing interface for all user roles and functionality</p>
+        </div>
+    </div>
+
+    <!-- Authentication Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-person-circle"></i> Current Authentication Status</h3>
+                </div>
+                <div class="card-body">
+                    {% if auth_status.is_authenticated %}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-success me-2">Logged In</span>
+                            <strong>{{ auth_status.username }}</strong>
+                            {% if auth_status.is_admin %}
+                                <span class="badge bg-danger ms-2">Admin</span>
+                            {% elif auth_status.is_teacher %}
+                                <span class="badge bg-warning text-dark ms-2">Teacher/Staff</span>
+                            {% elif auth_status.is_parent %}
+                                <span class="badge bg-info ms-2">Parent</span>
+                            {% endif %}
+                        </div>
+                        <a href="/logout/" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    {% else %}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-secondary me-2">Anonymous</span>
+                            <span>Not logged in</span>
+                        </div>
+                        <a href="/login/" class="btn btn-primary btn-sm">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Data Management -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-database"></i> Test Data Management</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>Quick Setup</h5>
+                            <p>Create test users to experience different roles:</p>
+                            <div class="btn-group me-2 mb-2" role="group">
+                                <a href="?create=parent" class="btn btn-outline-info">
+                                    <i class="bi bi-person-plus"></i> Create Test Parent + Children
+                                </a>
+                                <a href="?create=teacher" class="btn btn-outline-warning">
+                                    <i class="bi bi-person-workspace"></i> Create Test Teacher
+                                </a>
+                                <a href="?create=admin" class="btn btn-outline-danger">
+                                    <i class="bi bi-shield-lock"></i> Create Test Admin
+                                </a>
+                            </div>
+                            <br>
+                            <a href="?create=cleanup" class="btn btn-outline-dark btn-sm">
+                                <i class="bi bi-trash"></i> Clean Up Test Data
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Current Test Data</h6>
+                            <ul class="list-unstyled">
+                                <li>
+                                    <i class="bi bi-{{ sample_data.has_test_parent|yesno:'check-circle-fill,x-circle' }} text-{{ sample_data.has_test_parent|yesno:'success,muted' }}"></i>
+                                    Test Parent ({{ sample_data.children_count }} children)
+                                </li>
+                                <li>
+                                    <i class="bi bi-{{ sample_data.has_test_teacher|yesno:'check-circle-fill,x-circle' }} text-{{ sample_data.has_test_teacher|yesno:'success,muted' }}"></i>
+                                    Test Teacher
+                                </li>
+                                <li>
+                                    <i class="bi bi-{{ sample_data.has_test_admin|yesno:'check-circle-fill,x-circle' }} text-{{ sample_data.has_test_admin|yesno:'success,muted' }}"></i>
+                                    Test Admin
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Login Credentials -->
+    {% if test_credentials %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-key"></i> Test User Credentials</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for cred in test_credentials %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ cred.role }}</h6>
+                                    <p class="card-text small text-muted">{{ cred.description }}</p>
+                                    <div class="mb-2">
+                                        <strong>Username:</strong> 
+                                        <code onclick="navigator.clipboard.writeText('{{ cred.username }}')">{{ cred.username }}</code>
+                                        <i class="bi bi-clipboard text-muted ms-1" style="cursor: pointer;" title="Click to copy"></i>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Password:</strong> 
+                                        <code onclick="navigator.clipboard.writeText('{{ cred.password }}')">{{ cred.password }}</code>
+                                        <i class="bi bi-clipboard text-muted ms-1" style="cursor: pointer;" title="Click to copy"></i>
+                                    </div>
+                                    <!-- Quick login form -->
+                                    <form method="post" action="/login/" class="mt-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="username" value="{{ cred.username }}">
+                                        <input type="hidden" name="password" value="{{ cred.password }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-box-arrow-in-right"></i> Quick Login
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- URL Groups by Role -->
+    <div class="row">
+        <div class="col-12">
+            {% for role, urls in url_groups.items %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>
+                        {% if role == "Anonymous (Public)" %}
+                            <i class="bi bi-globe"></i>
+                        {% elif role == "Authenticated Parent" %}
+                            <i class="bi bi-person-heart"></i>
+                        {% elif role == "Teacher/Staff Only" %}
+                            <i class="bi bi-person-workspace"></i>
+                        {% elif role == "Admin/Superuser" %}
+                            <i class="bi bi-shield-lock"></i>
+                        {% endif %}
+                        {{ role }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if urls %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Page Name</th>
+                                    <th>URL</th>
+                                    <th>Description</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for name, url, description in urls %}
+                                <tr>
+                                    <td><strong>{{ name }}</strong></td>
+                                    <td><code>{{ url }}</code></td>
+                                    <td class="text-muted">{{ description }}</td>
+                                    <td>
+                                        <a href="{{ url }}" class="btn btn-sm btn-primary" target="_blank">
+                                            <i class="bi bi-box-arrow-up-right"></i> Visit
+                                        </a>
+                                        <button onclick="navigator.clipboard.writeText('{{ request.build_absolute_uri }}{{ url }}')" 
+                                                class="btn btn-sm btn-outline-secondary ms-1" title="Copy full URL">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No URLs available for this role.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Testing Instructions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-list-check"></i> Complete Testing Workflow</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>1. Anonymous User Testing</h5>
+                            <ol>
+                                <li>Visit the <strong>Home Page</strong> to see landing</li>
+                                <li>Try <strong>Parent Registration</strong> with real data</li>
+                                <li>Test <strong>Login</strong> form validation</li>
+                                <li>Check <strong>Template Previews</strong> work</li>
+                            </ol>
+
+                            <h5>2. Parent Role Testing</h5>
+                            <ol>
+                                <li>Create test parent data above</li>
+                                <li>Login as <code>test_parent</code></li>
+                                <li>Visit <strong>Dashboard</strong> - see children</li>
+                                <li>Try <strong>Add Child</strong> functionality</li>
+                                <li>Test <strong>Edit Profile</strong></li>
+                                <li>View individual child <strong>QR Codes</strong></li>
+                                <li>Test child <strong>Edit</strong> forms</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>3. Teacher Role Testing</h5>
+                            <ol>
+                                <li>Create test teacher data above</li>
+                                <li>Login as <code>test_teacher</code></li>
+                                <li>Test <strong>Attendance Scan</strong> QR functionality</li>
+                                <li>Visit <strong>Teacher Dashboard</strong> for class management</li>
+                                <li>Try <strong>Checkout</strong> processes for children</li>
+                            </ol>
+
+                            <h5>4. Admin Role Testing</h5>
+                            <ol>
+                                <li>Create test admin data above</li>
+                                <li>Login as <code>test_admin</code></li>
+                                <li>Access <strong>Django Admin</strong> interface</li>
+                                <li>All teacher functions should also work</li>
+                            </ol>
+
+                            <h5>5. Cross-Role Testing</h5>
+                            <ol>
+                                <li>Test authentication boundaries</li>
+                                <li>Verify permission restrictions work</li>
+                                <li>Check navigation updates by role</li>
+                                <li>Test QR code workflow end-to-end</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Utility Links -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-tools"></i> Development Utilities</h3>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="/preview/" class="btn btn-outline-info">
+                            <i class="bi bi-eye"></i> Template Previews
+                        </a>
+                        <a href="/admin/" class="btn btn-outline-danger" target="_blank">
+                            <i class="bi bi-gear"></i> Django Admin
+                        </a>
+                        <a href="/sitemap/" class="btn btn-outline-success">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh Site Map
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Copy to clipboard functionality
+document.querySelectorAll('code[onclick]').forEach(function(element) {
+    element.style.cursor = 'pointer';
+    element.title = 'Click to copy';
+});
+
+// Toast notification for copy actions
+function showCopyToast() {
+    // Simple alert for now - could be enhanced with Bootstrap toast
+    // alert('Copied to clipboard!');
+}
+</script>
+{% endblock %}

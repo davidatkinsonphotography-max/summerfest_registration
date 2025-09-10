@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Dashboard - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-credit-card"></i> Payment Dashboard</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Payments</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Account Balance Card -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-wallet2"></i> Account Balance</h4>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-4 text-primary">${{ payment_account.balance }}</h1>
+                    <p class="text-muted">Current available funds</p>
+                    <a href="{% url 'add_funds' %}" class="btn btn-success btn-lg">
+                        <i class="bi bi-plus-circle"></i> Add Funds
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-calculator"></i> Pricing Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Daily Rates:</strong></p>
+                    <ul class="list-unstyled">
+                        <li>• $6 per child per day</li>
+                        <li>• $12 per family per day</li>
+                        <li class="text-muted small">(We'll charge whichever is cheaper)</li>
+                    </ul>
+                    
+                    <p><strong>Weekly Caps:</strong></p>
+                    <ul class="list-unstyled">
+                        <li>• $20 per child per week maximum</li>
+                        <li>• $40 per family per week maximum</li>
+                    </ul>
+                    
+                    <div class="alert alert-info small mt-3">
+                        <strong>Your estimated daily cost:</strong> ${{ estimated_daily_cost }}
+                        <br><small>Based on {{ children.count }} registered child{{ children.count|pluralize }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Children Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-people"></i> Your Children</h5>
+                </div>
+                <div class="card-body">
+                    {% if children %}
+                        <div class="row">
+                            {% for child in children %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-person-circle text-primary me-2"></i>
+                                        <span>{{ child.first_name }} {{ child.last_name }}</span>
+                                        <small class="text-muted ms-auto">({{ child.get_child_class_display }})</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No children registered yet. <a href="{% url 'add_child' %}">Add a child</a> to get started.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Method</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in recent_transactions %}
+                                        <tr>
+                                            <td>{{ transaction.created_at|date:"M j, Y H:i" }}</td>
+                                            <td>{{ transaction.description }}</td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ transaction.get_payment_method_display }}</span>
+                                            </td>
+                                            <td class="text-end">
+                                                {% if transaction.transaction_type == 'credit' %}
+                                                    <span class="text-success">+${{ transaction.amount }}</span>
+                                                {% else %}
+                                                    <span class="text-danger">-${{ transaction.amount|floatformat:2 }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No transactions yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Charges -->
+    {% if daily_charges %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-calendar-check"></i> Daily Attendance Charges</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Children</th>
+                                    <th>Charge</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for charge in daily_charges %}
+                                    <tr>
+                                        <td>{{ charge.date|date:"M j, Y" }}</td>
+                                        <td>{{ charge.children_count }} child{{ charge.children_count|pluralize }}</td>
+                                        <td>${{ charge.actual_charge }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Payment Methods -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-light">
+                <div class="card-header bg-light">
+                    <h5><i class="bi bi-info-circle"></i> Payment Options</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-credit-card text-primary"></i> Online Payments</h6>
+                            <p class="small">Pay securely with your credit or debit card using our online payment system.</p>
+                            <a href="{% url 'add_funds' %}" class="btn btn-primary">
+                                <i class="bi bi-credit-card"></i> Pay Online
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-building text-success"></i> Pay at Registration Desk</h6>
+                            <p class="small">You can also pay with cash or EFTPOS at the registration desk during Summerfest.</p>
+                            <div class="text-muted small">
+                                <i class="bi bi-clock"></i> Available during event hours
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

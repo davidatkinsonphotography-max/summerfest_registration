@@ -1,0 +1,182 @@
+{% extends 'registration/base.html' %}
+
+{% block title %}My Passes - Summerfest Registration{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>My Summerfest Passes</h1>
+                <a href="{% url 'purchase_pass' %}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Purchase New Pass
+                </a>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Valid Passes -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-check-circle"></i> Active Passes</h5>
+                </div>
+                <div class="card-body">
+                    {% if valid_passes %}
+                        {% for pass in valid_passes %}
+                            <div class="card mb-3 border-success">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <h5 class="card-title">{{ pass.get_type_display }}</h5>
+                                            <p class="card-text">
+                                                <i class="fas fa-calendar-alt text-success"></i>
+                                                <strong>Valid:</strong> {{ pass.valid_from }} to {{ pass.valid_to }}
+                                                <br>
+                                                <i class="fas fa-dollar-sign text-success"></i>
+                                                <strong>Amount Paid:</strong> ${{ pass.amount_paid }}
+                                            </p>
+                                            {% if pass.stripe_payment_id %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-credit-card"></i>
+                                                    Payment ID: {{ pass.stripe_payment_id|truncatechars:20 }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <span class="badge bg-success fs-6 p-2">
+                                                <i class="fas fa-check"></i> Active
+                                            </span>
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    Purchased: {{ pass.created_at|date:"M d, Y g:i A" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Active Passes</h5>
+                            <p class="text-muted">You don't have any active passes for today ({{ today }}).</p>
+                            <a href="{% url 'purchase_pass' %}" class="btn btn-success">
+                                Purchase Your First Pass
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar with Pass Info -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-info-circle"></i> Pass Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-success">Pass Types:</h6>
+                        <ul class="list-unstyled small">
+                            <li><strong>Daily Child:</strong> One child, one day</li>
+                            <li><strong>Daily Family:</strong> All children, one day</li>
+                            <li><strong>Weekly Child:</strong> One child, full week</li>
+                            <li><strong>Weekly Family:</strong> All children, full week</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-info">Important Notes:</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-clock text-warning"></i> Weekly passes run Monday-Friday</li>
+                            <li><i class="fas fa-users text-primary"></i> Family passes cover all registered children</li>
+                            <li><i class="fas fa-shield-alt text-success"></i> Passes are non-refundable</li>
+                        </ul>
+                    </div>
+
+                    {% if valid_passes %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>You're all set!</strong> Your passes are valid for today.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- QR Code Info -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-qrcode"></i> Check-in Method</h6>
+                </div>
+                <div class="card-body text-center">
+                    <p class="small">Use your family QR code to check in your children at the event.</p>
+                    <a href="{% url 'parent_dashboard' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-qrcode"></i> View My QR Code
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expired Passes -->
+    {% if expired_passes %}
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0"><i class="fas fa-history"></i> Previous Passes</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="accordion" id="expiredPassesAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#expiredPasses" aria-expanded="false">
+                                        View {{ expired_passes|length }} expired pass{{ expired_passes|length|pluralize:"es" }}
+                                    </button>
+                                </h2>
+                                <div id="expiredPasses" class="accordion-collapse collapse">
+                                    <div class="accordion-body">
+                                        {% for pass in expired_passes %}
+                                            <div class="card mb-2 border-secondary">
+                                                <div class="card-body p-2">
+                                                    <div class="row align-items-center">
+                                                        <div class="col-md-6">
+                                                            <small><strong>{{ pass.get_type_display }}</strong></small>
+                                                            <br>
+                                                            <small class="text-muted">{{ pass.valid_from }} to {{ pass.valid_to }}</small>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <small class="text-muted">${{ pass.amount_paid }}</small>
+                                                        </div>
+                                                        <div class="col-md-3 text-end">
+                                                            <span class="badge bg-secondary">Expired</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

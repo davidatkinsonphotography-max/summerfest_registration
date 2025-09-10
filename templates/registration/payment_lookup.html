@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Account Lookup - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h3><i class="bi bi-search"></i> Payment Account Lookup</h3>
+                    <p class="mb-0">Quick account balance and payment history lookup for parents</p>
+                </div>
+                <div class="card-body">
+                    <!-- Search Form -->
+                    <form method="get" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <label for="username" class="form-label">Parent Username</label>
+                                <input type="text" class="form-control form-control-lg" id="username" name="username" 
+                                       value="{{ search_username|default:'' }}" placeholder="Enter parent's username">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-info btn-lg w-100">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    {% if search_username and not parent_profile %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> No parent found with username "{{ search_username }}". 
+                            Please check the spelling and try again.
+                        </div>
+                    {% endif %}
+
+                    {% if parent_profile %}
+                        <!-- Parent Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h5><i class="bi bi-person-check"></i> Parent Information</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Name:</strong> {{ parent_profile.first_name }} {{ parent_profile.last_name }}</p>
+                                        <p><strong>Username:</strong> {{ parent_profile.user.username }}</p>
+                                        <p><strong>Email:</strong> {{ parent_profile.email }}</p>
+                                        <p><strong>Phone:</strong> {{ parent_profile.phone_number }}</p>
+                                        <p class="mb-0"><strong>Children:</strong> {{ parent_profile.children.count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5><i class="bi bi-wallet2"></i> Payment Account</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h2 class="text-primary">${{ payment_account.balance }}</h2>
+                                        <p class="text-muted mb-0">Current Balance</p>
+                                        
+                                        {% if payment_account.balance <= 0 %}
+                                            <div class="alert alert-warning mt-2 small">
+                                                <i class="bi bi-exclamation-triangle"></i> Low/No Balance
+                                            </div>
+                                        {% elif payment_account.balance < 20 %}
+                                            <div class="alert alert-info mt-2 small">
+                                                <i class="bi bi-info-circle"></i> Consider topping up
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Children List -->
+                        {% with children=parent_profile.children.all %}
+                        {% if children %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="bi bi-people"></i> Registered Children</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            {% for child in children %}
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-person-circle text-primary me-2"></i>
+                                                        <div>
+                                                            <strong>{{ child.first_name }} {{ child.last_name }}</strong>
+                                                            <br><small class="text-muted">{{ child.get_child_class_display }}</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+
+                        <!-- Recent Transactions -->
+                        {% with transactions=payment_account.transactions.all|slice:":5" %}
+                        {% if transactions %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Description</th>
+                                                        <th>Method</th>
+                                                        <th class="text-end">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for transaction in transactions %}
+                                                        <tr>
+                                                            <td>{{ transaction.created_at|date:"M j H:i" }}</td>
+                                                            <td>{{ transaction.description|truncatechars:40 }}</td>
+                                                            <td>
+                                                                <span class="badge bg-secondary small">{{ transaction.get_payment_method_display }}</span>
+                                                            </td>
+                                                            <td class="text-end">
+                                                                {% if transaction.transaction_type == 'credit' %}
+                                                                    <span class="text-success">+${{ transaction.amount }}</span>
+                                                                {% else %}
+                                                                    <span class="text-danger">-${{ transaction.amount|floatformat:2 }}</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> No payment transactions yet.
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+
+                        <!-- Quick Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6><i class="bi bi-lightning"></i> Quick Actions</h6>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'manual_payment' %}?username={{ parent_profile.user.username }}" class="btn btn-warning">
+                                                <i class="bi bi-cash-stack"></i> Record Payment
+                                            </a>
+                                            <button class="btn btn-info" onclick="window.print()">
+                                                <i class="bi bi-printer"></i> Print Summary
+                                            </button>
+                                            <button class="btn btn-outline-secondary" onclick="copyAccountInfo()">
+                                                <i class="bi bi-clipboard"></i> Copy Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if not search_username %}
+                        <!-- Instructions when no search performed -->
+                        <div class="alert alert-light">
+                            <h6><i class="bi bi-info-circle"></i> How to Use Account Lookup</h6>
+                            <ol class="small mb-0">
+                                <li>Ask the parent for their username (what they use to login)</li>
+                                <li>Enter the username in the search box above</li>
+                                <li>View their account balance and payment history</li>
+                                <li>Use "Record Payment" if they're making a cash/EFTPOS payment</li>
+                            </ol>
+                        </div>
+
+                        <!-- Pricing Reference -->
+                        <div class="card border-info mt-4">
+                            <div class="card-header bg-info text-white">
+                                <h6><i class="bi bi-calculator"></i> Pricing Reference</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row small">
+                                    <div class="col-md-6">
+                                        <strong>Daily Rates:</strong>
+                                        <ul class="list-unstyled ms-2">
+                                            <li>• $6 per child per day</li>
+                                            <li>• $12 per family per day</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Weekly Caps:</strong>
+                                        <ul class="list-unstyled ms-2">
+                                            <li>• $20 per child maximum</li>
+                                            <li>• $40 per family maximum</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-focus on search input
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('username').focus();
+});
+
+// Copy account information to clipboard
+function copyAccountInfo() {
+    {% if parent_profile %}
+        const accountInfo = `Parent: {{ parent_profile.first_name }} {{ parent_profile.last_name }}
+Username: {{ parent_profile.user.username }}
+Email: {{ parent_profile.email }}
+Phone: {{ parent_profile.phone_number }}
+Account Balance: ${{ payment_account.balance }}
+Children: {{ parent_profile.children.count }}`;
+        
+        navigator.clipboard.writeText(accountInfo).then(function() {
+            alert('Account information copied to clipboard!');
+        }, function() {
+            alert('Could not copy to clipboard. Please copy manually.');
+        });
+    {% endif %}
+}
+
+// Handle search form with Enter key
+document.getElementById('username').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        this.form.submit();
+    }
+});
+</script>
+{% endblock %}

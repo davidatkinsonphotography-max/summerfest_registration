@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Data Export Dashboard - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-download"></i> Data Export Dashboard</h2>
+            <p class="text-muted">Export Summerfest registration data for reporting and analysis</p>
+            
+            <!-- Admin Only Notice -->
+            <div class="alert alert-warning">
+                <i class="bi bi-shield-lock"></i> <strong>Administrator Access Only</strong>
+                <br>This area contains sensitive data. Use only for official reporting purposes.
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <i class="bi bi-people-fill text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ stats.total_families }}</h3>
+                    <p class="text-muted mb-0">Families</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <i class="bi bi-person-hearts text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ stats.total_children }}</h3>
+                    <p class="text-muted mb-0">Children</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <i class="bi bi-calendar-check text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ stats.total_attendance_records }}</h3>
+                    <p class="text-muted mb-0">Attendance Records</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <i class="bi bi-credit-card text-warning" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ stats.total_transactions }}</h3>
+                    <p class="text-muted mb-0">Payment Transactions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h4><i class="bi bi-file-earmark-spreadsheet"></i> Available Data Exports</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Complete Report -->
+                        <div class="col-lg-6 mb-4">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5><i class="bi bi-file-earmark-text"></i> Complete Report</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Comprehensive CSV export containing all data:</p>
+                                    <ul class="small">
+                                        <li>Family and parent details</li>
+                                        <li>Children information and class assignments</li>
+                                        <li>Attendance records and duration</li>
+                                        <li>Payment history and account balances</li>
+                                        <li>Medical and dietary information</li>
+                                    </ul>
+                                    <p class="text-muted small">Perfect for comprehensive analysis and reporting.</p>
+                                    
+                                    <a href="{% url 'export_all_data' %}" class="btn btn-primary">
+                                        <i class="bi bi-download"></i> Download Complete Report
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Individual Exports -->
+                        <div class="col-lg-6 mb-4">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h5><i class="bi bi-list-check"></i> Individual Exports</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Specialized exports for specific data:</p>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-info btn-sm" onclick="alert('Coming soon! Use Complete Report for now.')">
+                                            <i class="bi bi-people"></i> Families Only
+                                        </button>
+                                        <button class="btn btn-outline-info btn-sm" onclick="alert('Coming soon! Use Complete Report for now.')">
+                                            <i class="bi bi-person-hearts"></i> Children Only
+                                        </button>
+                                        <button class="btn btn-outline-info btn-sm" onclick="alert('Coming soon! Use Complete Report for now.')">
+                                            <i class="bi bi-calendar-check"></i> Attendance Records
+                                        </button>
+                                        <button class="btn btn-outline-info btn-sm" onclick="alert('Coming soon! Use Complete Report for now.')">
+                                            <i class="bi bi-credit-card"></i> Payment Records
+                                        </button>
+                                    </div>
+                                    
+                                    <p class="text-muted small mt-2">
+                                        Individual exports coming soon. Use the Complete Report for all data needs.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Instructions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-light">
+                <div class="card-header bg-light">
+                    <h5><i class="bi bi-info-circle"></i> Export Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>How to Use Exports:</h6>
+                            <ol class="small">
+                                <li><strong>Download:</strong> Click the export button to download CSV file</li>
+                                <li><strong>Open:</strong> Open in Excel, Google Sheets, or any spreadsheet program</li>
+                                <li><strong>Analyze:</strong> Use filters, sorting, and pivot tables as needed</li>
+                                <li><strong>Secure:</strong> Keep exported data secure and delete when no longer needed</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Data Included:</h6>
+                            <ul class="small">
+                                <li>Personal information (names, contacts, addresses)</li>
+                                <li>Child details (ages, classes, medical info)</li>
+                                <li>Attendance tracking (check-in/out times)</li>
+                                <li>Payment records (amounts, methods, dates)</li>
+                                <li>Registration preferences and consents</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-danger mt-3">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Privacy and Security Notice</h6>
+                        <p class="small mb-0">
+                            These exports contain personal and sensitive information. Handle with care:
+                        </p>
+                        <ul class="small mb-0">
+                            <li>Use only for official church/event purposes</li>
+                            <li>Store securely and delete when no longer needed</li>
+                            <li>Do not share with unauthorized personnel</li>
+                            <li>Follow church privacy and data protection policies</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-secondary">
+                <div class="card-header">
+                    <h5><i class="bi bi-lightning"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="/admin/" class="btn btn-outline-dark" target="_blank">
+                            <i class="bi bi-gear"></i> Django Admin
+                        </a>
+                        <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-people"></i> Teacher Dashboard
+                        </a>
+                        <a href="{% url 'site_map' %}" class="btn btn-outline-info">
+                            <i class="bi bi-map"></i> Site Map
+                        </a>
+                        <a href="{% url 'manual_payment' %}" class="btn btn-outline-warning">
+                            <i class="bi bi-cash-stack"></i> Record Payment
+                        </a>
+                        <a href="{% url 'attendance_scan' %}" class="btn btn-outline-success">
+                            <i class="bi bi-qr-code-scan"></i> Attendance Scan
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Preview -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-clock-history"></i> Export History</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        <i class="bi bi-info-circle"></i> 
+                        Export history tracking is not currently implemented. 
+                        Consider adding this feature for audit purposes.
+                    </p>
+                    <small class="text-muted">
+                        Future enhancement: Track who exported what data and when for security auditing.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add confirmation for sensitive exports
+document.querySelector('a[href*="export_all_data"]').addEventListener('click', function(e) {
+    const confirmation = confirm('This will export ALL sensitive data including personal information, payment details, and medical information.\\n\\nAre you sure you want to proceed?\\n\\nRemember to handle this data securely and delete when no longer needed.');
+    
+    if (!confirmation) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Show download indicator
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Preparing download...';
+    this.classList.add('disabled');
+    
+    // Re-enable after 5 seconds (download should start by then)
+    setTimeout(() => {
+        this.innerHTML = '<i class="bi bi-download"></i> Download Complete Report';
+        this.classList.remove('disabled');
+    }, 5000);
+});
+
+// Add helpful tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    // Enable Bootstrap tooltips if available
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+});
+</script>
+{% endblock %}

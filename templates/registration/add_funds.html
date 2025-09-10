@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Add Funds - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="bi bi-plus-circle"></i> Add Funds to Your Account</h3>
+                </div>
+                <div class="card-body">
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'payment_dashboard' %}">Payments</a></li>
+                            <li class="breadcrumb-item active">Add Funds</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Current Balance -->
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-wallet2"></i> Current Balance: ${{ payment_account.balance }}</h5>
+                        <p class="mb-0">Add funds to your account for easy check-in during Summerfest.</p>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <form method="post" id="payment-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Select amount to add:</strong></label>
+                            <div class="row">
+                                {% for value, label in form.amount_choice.field.choices %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="amount_choice" 
+                                                   id="amount_{{ value }}" value="{{ value }}" 
+                                                   {% if value == 'custom' %}onchange="toggleCustomAmount()"{% endif %}>
+                                            <label class="form-check-label" for="amount_{{ value }}">
+                                                {{ label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.amount_choice.errors %}
+                                <div class="text-danger small">{{ form.amount_choice.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Custom Amount Field -->
+                        <div class="mb-4" id="custom-amount-field" style="display: none;">
+                            <label for="{{ form.custom_amount.id_for_label }}" class="form-label">
+                                {{ form.custom_amount.label }}
+                            </label>
+                            {{ form.custom_amount }}
+                            <div class="form-text">Enter an amount between $1.00 and $40.00</div>
+                            {% if form.custom_amount.errors %}
+                                <div class="text-danger small">{{ form.custom_amount.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Payment Method Info -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6><i class="bi bi-shield-check text-success"></i> Secure Payment</h6>
+                                <p class="small mb-2">Your payment is processed securely using Stripe. We accept:</p>
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-primary">Visa</span>
+                                    <span class="badge bg-primary">Mastercard</span>
+                                </div>
+                                <p class="small text-muted mt-1 mb-0">
+                                    <i class="bi bi-info-circle"></i> Only Visa and Mastercard accepted
+                                </p>
+                                <p class="small text-muted mt-2 mb-0">
+                                    <i class="bi bi-lock"></i> All transactions are encrypted and secure.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Pricing Reminder -->
+                        <div class="card border-info mb-4">
+                            <div class="card-body">
+                                <h6 class="text-info"><i class="bi bi-info-circle"></i> Pricing Reminder</h6>
+                                <div class="row small">
+                                    <div class="col-md-6">
+                                        <strong>Daily Rates:</strong>
+                                        <ul class="list-unstyled ms-3">
+                                            <li>• $6 per child per day</li>
+                                            <li>• $12 per family per day</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Weekly Caps:</strong>
+                                        <ul class="list-unstyled ms-3">
+                                            <li>• $20 per child maximum</li>
+                                            <li>• $40 per family maximum</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="alert alert-light small mt-2 mb-0">
+                                    <strong>Recommendations:</strong> 
+                                    One child, one day: $6 • One child, full week: $20 • Family, full week: $40
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payment_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg" id="submit-button">
+                                <i class="bi bi-credit-card"></i> Proceed to Payment
+                            </button>
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mt-3">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="card mt-4 border-light">
+                <div class="card-body">
+                    <h6><i class="bi bi-question-circle"></i> Need Help?</h6>
+                    <p class="small mb-0">
+                        If you have questions about payments or need assistance, please contact us at the registration desk 
+                        during Summerfest or email us before the event.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCustomAmount() {
+    const customField = document.getElementById('custom-amount-field');
+    const customRadio = document.getElementById('amount_custom');
+    
+    if (customRadio.checked) {
+        customField.style.display = 'block';
+        document.getElementById('{{ form.custom_amount.id_for_label }}').focus();
+    } else {
+        customField.style.display = 'none';
+    }
+}
+
+// Show custom field if it's already selected (e.g., after form error)
+document.addEventListener('DOMContentLoaded', function() {
+    const customRadio = document.getElementById('amount_custom');
+    if (customRadio && customRadio.checked) {
+        toggleCustomAmount();
+    }
+    
+    // Add change listeners to all radio buttons
+    const radioButtons = document.querySelectorAll('input[name="amount_choice"]');
+    radioButtons.forEach(function(radio) {
+        if (radio.value !== 'custom') {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    document.getElementById('custom-amount-field').style.display = 'none';
+                }
+            });
+        }
+    });
+});
+
+// Form submission handling
+document.getElementById('payment-form').addEventListener('submit', function(e) {
+    const submitButton = document.getElementById('submit-button');
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...';
+    submitButton.disabled = true;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Template previews</h1>
+  <p>Click any link to open that page. Use the preview link to render the template directly.</p>
+  <ul>
+    {% for p in pages %}
+      <li>
+        <a href="/{{ p }}/">{{ p|capfirst }}</a> - preview only:
+        <a href="/preview/{{ p }}/">preview</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

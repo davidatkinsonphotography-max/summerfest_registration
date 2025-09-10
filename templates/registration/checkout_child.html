@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Check Out {{ child.first_name }} - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0"><i class="bi bi-box-arrow-right"></i> Check Out Child</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4>{{ child.first_name }} {{ child.last_name }}</h4>
+                        <p class="text-muted">{{ child.get_child_class_display }}</p>
+                        <p><strong>Checked in at:</strong> {{ attendance.time_in|time:"H:i" }}</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.child_id }}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Notes (Optional)</label>
+                            {{ form.notes }}
+                            <small class="form-text text-muted">
+                                Any additional notes about the child's day or pickup
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-box-arrow-right"></i> Confirm Check Out
+                            </button>
+                            <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Class Management
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Child Emergency Information -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-telephone"></i> Emergency Contact</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Contact:</strong> {{ child.parent.emergency_contact_name }}</p>
+                    <p><strong>Phone:</strong> {{ child.parent.emergency_contact_phone }}</p>
+                    <p><strong>Relationship:</strong> {{ child.parent.get_emergency_contact_relationship_display }}</p>
+                </div>
+            </div>
+            
+            {% if child.has_dietary_needs or child.has_medical_needs %}
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-heart-pulse"></i> Health Information</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if child.has_dietary_needs %}
+                            <div class="alert alert-warning">
+                                <strong>Dietary Needs:</strong><br>
+                                {{ child.dietary_needs_detail }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if child.has_medical_needs %}
+                            <div class="alert alert-danger">
+                                <strong>Medical/Allergy Information:</strong><br>
+                                {{ child.medical_allergy_details }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

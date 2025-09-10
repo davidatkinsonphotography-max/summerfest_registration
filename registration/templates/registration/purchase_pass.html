@@ -1,0 +1,157 @@
+{% extends 'registration/base.html' %}
+
+{% block title %}Purchase Pass - Summerfest Registration{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Purchase a Summerfest Pass</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Select Your Pass</h4>
+                </div>
+                <div class="card-body">
+                    {% if children_count > 0 %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            You have {{ children_count }} child{{ children_count|pluralize:"ren" }} registered. 
+                            {% if children_count == 1 %}
+                                We recommend a <strong>Weekly Child Pass</strong> for the best value.
+                            {% else %}
+                                We recommend a <strong>Weekly Family Pass</strong> for the best value with multiple children.
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.pass_type.label_tag }}
+                                {{ form.pass_type }}
+                                {% if form.pass_type.errors %}
+                                    <div class="text-danger">{{ form.pass_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.start_date.label_tag }}
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="text-danger">{{ form.start_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="pricing-info mb-4">
+                            <h5>Pass Pricing:</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><strong>Daily Child Pass</strong> - Valid for one child for one day</span>
+                                    <span class="badge bg-primary">$5</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><strong>Daily Family Pass</strong> - Valid for all your children for one day</span>
+                                    <span class="badge bg-primary">$10</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><strong>Weekly Child Pass</strong> - Valid for one child for the entire week</span>
+                                    <span class="badge bg-success">$20</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><strong>Weekly Family Pass</strong> - Valid for all your children for the entire week</span>
+                                    <span class="badge bg-success">$35</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-credit-card"></i>
+                            Purchase Pass
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Your Current Passes</h5>
+                </div>
+                <div class="card-body">
+                    {% if existing_passes %}
+                        {% for pass in existing_passes %}
+                            <div class="card mb-2 {% if pass.is_valid_for_date %}border-success{% else %}border-secondary{% endif %}">
+                                <div class="card-body p-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <small class="text-muted">{{ pass.get_type_display }}</small>
+                                            <br>
+                                            <small>{{ pass.valid_from }} to {{ pass.valid_to }}</small>
+                                        </div>
+                                        <div>
+                                            {% if pass.is_valid_for_date %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Expired</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="mt-1">
+                                        <small class="text-muted">${{ pass.amount_paid }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No passes purchased yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6>Need Help?</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-question-circle text-info"></i> <strong>Daily passes</strong> are perfect for occasional visits</li>
+                        <li><i class="fas fa-star text-warning"></i> <strong>Weekly passes</strong> offer the best value for regular attendance</li>
+                        <li><i class="fas fa-users text-success"></i> <strong>Family passes</strong> cover all your registered children</li>
+                        <li><i class="fas fa-calendar text-primary"></i> Weekly passes run Monday through Friday</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passTypeSelect = document.getElementById('id_pass_type');
+    const startDateInput = document.getElementById('id_start_date');
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.setAttribute('min', today);
+    
+    // Provide visual feedback on pass selection
+    passTypeSelect.addEventListener('change', function() {
+        const pricing = document.querySelector('.pricing-info');
+        pricing.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+});
+</script>
+{% endblock %}

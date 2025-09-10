@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Summerfest{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="bi bi-shield-check"></i> Admin Dashboard - {{ today|date:"M j, Y" }}
+            </h2>
+            <p class="text-muted">Administrative control for check-in and payment processing</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">All Children - Check-in & Payment Processing</h4>
+                    <div>
+                        <a href="{% url 'attendance_scan' %}" class="btn btn-primary me-2">
+                            <i class="bi bi-qr-code-scan"></i> Scan QR Codes
+                        </a>
+                        <a href="{% url 'manual_sign_in' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil-square"></i> Manual Sign-in
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if children_data %}
+                        <!-- Filter by class -->
+                        <div class="mb-3">
+                            <label for="classFilter" class="form-label">Filter by Class:</label>
+                            <select id="classFilter" class="form-select" style="width: auto; display: inline-block;">
+                                <option value="" {% if not selected_class %}selected{% endif %}>All Classes</option>
+                                <option value="creche" {% if selected_class == 'creche' %}selected{% endif %}>Creche (0-2yrs)</option>
+                                <option value="tackers" {% if selected_class == 'tackers' %}selected{% endif %}>Little Tackers (3yrs-Kindy)</option>
+                                <option value="minis" {% if selected_class == 'minis' %}selected{% endif %}>Minis (Years 1-2)</option>
+                                <option value="nitro" {% if selected_class == 'nitro' %}selected{% endif %}>Nitro (Years 3-4)</option>
+                                <option value="56ers" {% if selected_class == '56ers' %}selected{% endif %}>56ers (Years 5-6)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th style="width: 80px;">Class</th>
+                                        <th style="width: 90px;">Status</th>
+                                        <th style="width: 80px;">Times</th>
+                                        <th style="width: 60px;">Photo</th>
+                                        <th>Parent & Balance</th>
+                                        <th>Medical/Dietary</th>
+                                        <th style="width: 140px;">Add Funds</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in children_data %}
+                                        <tr class="child-row" data-class="{{ data.child.child_class }}">
+                                            <td>
+                                                <strong>{{ data.child.first_name }} {{ data.child.last_name }}</strong><br>
+                                                <small class="text-muted">DOB: {{ data.child.date_of_birth|date:"M j, Y" }}</small>
+                                            </td>
+                                            <td style="width: 80px;">
+                                                <small style="line-height: 1.2;">{{ data.child.get_child_class_display }}</small>
+                                            </td>
+                                            <td style="width: 90px;">
+                                                {% if data.attendance %}
+                                                    <span class="badge" style="background-color: {{ data.attendance.get_status_color }}; font-size: 10px;">
+                                                        {{ data.attendance.get_status_display }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge" style="background-color: #6c757d; font-size: 10px;">Not yet arrived</span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="width: 80px;">
+                                                {% if data.attendance %}
+                                                    <small>{{ data.attendance.time_in|time:"H:i" }}</small>
+                                                    {% if data.attendance.time_out %}
+                                                        <br><small>Out: {{ data.attendance.time_out|time:"H:i" }}</small>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <small class="text-muted">-</small>
+                                                {% endif %}
+                                            </td>
+                                            <td style="width: 60px; text-align: center;">
+                                                {% if data.child.photo_consent %}
+                                                    <span class="badge bg-success" title="Photo consent given"><i class="bi bi-camera"></i></span>
+                                                {% else %}
+                                                    <span class="badge bg-danger" title="No photo consent"><i class="bi bi-camera-fill"></i></span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <strong>{{ data.child.parent.first_name }} {{ data.child.parent.last_name }}</strong><br>
+                                                <small>{{ data.child.parent.phone_number }}</small><br>
+                                                {% if data.child.parent.payment_account %}
+                                                    <span class="badge {% if data.child.parent.payment_account.balance > 10 %}bg-success{% elif data.child.parent.payment_account.balance > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                        ${{ data.child.parent.payment_account.balance }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">No account</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if data.child.has_dietary_needs %}
+                                                    <div class="alert alert-warning py-1 mb-1" style="font-size: 11px;">
+                                                        <small><strong>Dietary:</strong> {{ data.child.dietary_needs_detail }}</small>
+                                                    </div>
+                                                {% endif %}
+                                                {% if data.child.has_medical_needs %}
+                                                    <div class="alert alert-danger py-1 mb-1" style="font-size: 11px;">
+                                                        <small><strong>Medical:</strong> {{ data.child.medical_allergy_details }}</small>
+                                                    </div>
+                                                {% endif %}
+                                                {% if not data.child.has_dietary_needs and not data.child.has_medical_needs %}
+                                                    <small class="text-muted">None reported</small>
+                                                {% endif %}
+                                            </td>
+                                            <td style="width: 140px;">
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">$</span>
+                                                    <input type="number" class="form-control" placeholder="0" min="1" max="100" 
+                                                           id="amount_{{ data.child.id }}" style="font-size: 12px;">
+                                                    <button class="btn btn-success btn-sm" type="button" 
+                                                            onclick="addCashPayment({{ data.child.parent.id }}, {{ data.child.id }}, '{{ data.child.parent.first_name }} {{ data.child.parent.last_name }}')"
+                                                            style="font-size: 10px;">
+                                                        <i class="bi bi-cash"></i> Add
+                                                    </button>
+                                                </div>
+                                                <small class="text-muted d-block mt-1">Cash/EFTPOS payment</small>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Summary Stats -->
+                        <div class="row mt-4">
+                            <div class="col-md-3">
+                                <div class="card bg-light text-dark">
+                                    <div class="card-body text-center p-2">
+                                        <h6>Not Yet Arrived</h6>
+                                        <h3 id="notArrivedCount">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center p-2">
+                                        <h6>Checked In</h6>
+                                        <h3 id="checkedInCount">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center p-2">
+                                        <h6>In Class</h6>
+                                        <h3 id="inClassCount">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-white" style="background-color: #6f42c1;">
+                                    <div class="card-body text-center p-2">
+                                        <h6>Picked Up</h6>
+                                        <h3 id="pickedUpCount">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-people" style="font-size: 4rem; color: #ccc;"></i>
+                            <h5 class="mt-3">No children registered yet</h5>
+                            <p class="text-muted">Children will appear here once parents complete their registration.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classFilter = document.getElementById('classFilter');
+    const childRows = document.querySelectorAll('.child-row');
+    
+    // Filter functionality using URL parameters (server-side filtering)
+    if (classFilter) {
+        classFilter.addEventListener('change', function() {
+            const selectedClass = this.value;
+            
+            // Redirect to the same page with class filter parameter
+            const url = new URL(window.location);
+            if (selectedClass) {
+                url.searchParams.set('class', selectedClass);
+            } else {
+                url.searchParams.delete('class');
+            }
+            window.location.href = url.toString();
+        });
+    }
+    
+    // Update summary counts based on current data (server-side filtering means all rows are relevant)
+    function updateCounts() {
+        let notArrivedCount = 0;
+        let checkedInCount = 0;
+        let inClassCount = 0;
+        let pickedUpCount = 0;
+        
+        childRows.forEach(row => {
+            const badge = row.querySelector('.badge');
+            if (badge) {
+                const status = badge.textContent.trim();
+                if (status.includes('Not yet arrived')) {
+                    notArrivedCount++;
+                } else if (status.includes('Checked in')) {
+                    checkedInCount++;
+                } else if (status.includes('In class')) {
+                    inClassCount++;
+                } else if (status.includes('Picked up')) {
+                    pickedUpCount++;
+                }
+            }
+        });
+        
+        document.getElementById('notArrivedCount').textContent = notArrivedCount;
+        document.getElementById('checkedInCount').textContent = checkedInCount;
+        document.getElementById('inClassCount').textContent = inClassCount;
+        document.getElementById('pickedUpCount').textContent = pickedUpCount;
+    }
+    
+    // Initial count update
+    updateCounts();
+});
+
+// Function to add cash payment
+function addCashPayment(parentId, childId, parentName) {
+    const amountInput = document.getElementById(`amount_${childId}`);
+    const amount = parseFloat(amountInput.value);
+    
+    if (!amount || amount <= 0) {
+        alert('Please enter a valid amount greater than $0');
+        return;
+    }
+    
+    if (amount > 100) {
+        alert('Maximum payment amount is $100. For larger amounts, please use the manual payment form.');
+        return;
+    }
+    
+    if (confirm(`Add $${amount.toFixed(2)} cash/EFTPOS payment for ${parentName}?`)) {
+        fetch('/admin_add_payment/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                parent_id: parentId,
+                amount: amount,
+                payment_method: 'cash'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(`Payment added successfully! New balance: $${data.new_balance}`);
+                amountInput.value = '';
+                // Reload page while preserving the current filter
+                reloadWithFilter();
+            } else {
+                alert(data.message || 'An error occurred while adding payment');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while processing the payment');
+        });
+    }
+}
+
+// Function to reload page while preserving filter
+function reloadWithFilter() {
+    // Simply reload - the current URL parameters will be preserved
+    location.reload();
+}
+
+// Function to get current filter parameter for redirects
+function getCurrentFilter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('class') || '';
+}
+</script>
+{% endblock %}

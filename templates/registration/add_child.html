@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Child - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0"><i class="bi bi-plus-circle"></i> Add Child</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Child Information -->
+                        <h4 class="text-success mt-4 mb-3">Child Information</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name *</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name *</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth *</label>
+                                {{ form.date_of_birth }}
+                                <small class="form-text text-muted">{{ form.date_of_birth.help_text }}</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Gender *</label>
+                                <div class="form-check-container">
+                                    {% for choice in form.gender %}
+                                        <div class="form-check">
+                                            {{ choice.tag }}
+                                            <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                {{ choice.choice_label }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Which class will your child attend? *</label>
+                            <div class="form-check-container">
+                                {% for choice in form.child_class %}
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Health Information -->
+                        <h4 class="text-success mt-4 mb-3">Health Information</h4>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.has_dietary_needs.label }} *</label>
+                            <div class="form-check-container">
+                                {% for choice in form.has_dietary_needs %}
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="dietary-detail-container">
+                            <label for="{{ form.dietary_needs_detail.id_for_label }}" class="form-label">Dietary Needs Details</label>
+                            {{ form.dietary_needs_detail }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.has_medical_needs.label }} *</label>
+                            <div class="form-check-container">
+                                {% for choice in form.has_medical_needs %}
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="medical-detail-container">
+                            <label for="{{ form.medical_allergy_details.id_for_label }}" class="form-label">Medical/Allergy Details (non-dietary)</label>
+                            {{ form.medical_allergy_details }}
+                        </div>
+                        
+                        <!-- Photo Consent -->
+                        <h4 class="text-success mt-4 mb-3">Photo Consent</h4>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.photo_consent }}
+                                <label class="form-check-label" for="{{ form.photo_consent.id_for_label }}">
+                                    {{ form.photo_consent.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Register Child
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

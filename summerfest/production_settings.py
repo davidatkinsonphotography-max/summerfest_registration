@@ -16,9 +16,12 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'CHANGE-THIS-IN-PRODUCTION')
 DEBUG = False
 
 # Add your PythonAnywhere domain here
+# Replace 'yourusername' with your actual PythonAnywhere username
 ALLOWED_HOSTS = [
-    'yourusername.pythonanywhere.com',  # Replace with your actual domain
+    'yourusername.pythonanywhere.com',
     'www.yourusername.pythonanywhere.com',
+    'localhost',  # For testing
+    '127.0.0.1',  # For testing
 ]
 
 # Database
@@ -47,8 +50,9 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_ROOT = '/home/yourusername/summerfest/static'
-MEDIA_ROOT = '/home/yourusername/summerfest/media'
+# Replace 'yourusername' with your actual PythonAnywhere username
+STATIC_ROOT = '/home/yourusername/summerfest_registration/static'
+MEDIA_ROOT = '/home/yourusername/summerfest_registration/media'
 
 # Stripe Configuration - LIVE KEYS FOR PRODUCTION!
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'pk_live_YOUR_KEY_HERE')

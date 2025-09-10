@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,11 +26,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Generate a new secret key for production!
-SECRET_KEY = 'django-insecure-ui-q_ou#$%!n-c1r1lmtkvc-x#q4i&c!f)$dsf3nj5zu1(e#g$'  # CHANGE THIS FOR PRODUCTION!
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-ui-q_ou#$%!n-c1r1lmtkvc-x#q4i&c!f)$dsf3nj5zu1(e#g$')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Set to False for production
-DEBUG = True  # CHANGE TO FALSE FOR PRODUCTION!
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
 # Add your PythonAnywhere domain here for production
 ALLOWED_HOSTS = []  # ADD: ['yourusername.pythonanywhere.com']
@@ -137,11 +142,12 @@ LOGOUT_REDIRECT_URL = '/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Stripe Configuration
-# PRODUCTION: Replace these with your LIVE Stripe keys (pk_live_... and sk_live_...)
+# Keys are loaded from environment variables for security
 # DEVELOPMENT: Use test keys (pk_test_... and sk_test_...)
-STRIPE_PUBLISHABLE_KEY = 'REMOVED_STRIPE_PUBLISHABLE_KEY'  # CHANGE FOR PRODUCTION!
-STRIPE_SECRET_KEY = 'REMOVED_STRIPE_SECRET_KEY'  # CHANGE FOR PRODUCTION!
-STRIPE_WEBHOOK_SECRET = 'whsec_YOUR_WEBHOOK_SECRET_HERE'  # CHANGE FOR PRODUCTION!
+# PRODUCTION: Use live keys (pk_live_... and sk_live_...)
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 
 # Payment Settings
 PAYMENT_CURRENCY = 'AUD'  # Australian Dollars
@@ -158,8 +164,8 @@ else:
     EMAIL_HOST = 'smtp.gmail.com'  # CHANGE: Use your church's SMTP server
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = 'your-email@gmail.com'  # CHANGE: Your actual email
-    EMAIL_HOST_PASSWORD = 'your-app-password'  # CHANGE: Your email app password
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'your-email@gmail.com')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'your-app-password')
 
 # Default email settings - CHANGE THESE FOR PRODUCTION
 DEFAULT_FROM_EMAIL = 'Summerfest Registration <summerfest@example.com>'  # CHANGE TO ACTUAL EMAIL

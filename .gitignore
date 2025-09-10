@@ -56,10 +56,14 @@ Thumbs.db
 
 # Environment variables
 .env
+.env.*
+!.env.example
 
 # Secret keys and sensitive data
 secret_key.txt
 local_settings.py
+production_settings.py
+settings_production.py
 
 # Test coverage
 htmlcov/

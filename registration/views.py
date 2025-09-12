@@ -267,7 +267,13 @@ def attendance_scan(request):
                 'time': attendance.time_in.strftime('%H:%M'),
                 'charge': f'${charge_amount}' if charge_amount > 0 else 'Free',
                 'charge_reason': charge_reason,
-                'remaining_balance': f'${child.parent.payment_account.balance if hasattr(child.parent, "payment_account") else "0.00"}'
+                'remaining_balance': f'${child.parent.payment_account.balance if hasattr(child.parent, "payment_account") else "0.00"}',
+                # Additional child information for persistent check-in list
+                'dietary_needs': child.has_dietary_needs,
+                'medical_needs': child.has_medical_needs,
+                'photo_consent': child.photo_consent,
+                'dietary_details': child.dietary_needs_detail or '',
+                'medical_details': child.medical_allergy_details or ''
             })
         else:
             return JsonResponse({

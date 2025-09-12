@@ -345,35 +345,97 @@ class ManualPaymentForm(forms.Form):
 class ManualSignInForm(forms.Form):
     """Form for staff to manually sign in children when parents forget QR codes"""
     
-    parent_username = forms.CharField(
+    search_query = forms.CharField(
         max_length=150,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter parent username'}),
-        label="Parent Username"
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Enter username, surname, or phone number'
+        }),
+        label="Search Parent",
+        help_text="You can search by username, family surname, or phone number"
     )
     
-    def clean_parent_username(self):
-        username = self.cleaned_data['parent_username']
+    def clean_search_query(self):
+        query = self.cleaned_data['search_query'].strip()
+        
+        if not query:
+            raise ValidationError("Please enter a search term.")
+        
+        # Try to find parent by different methods
+        parent_profile = None
+        search_method = None
+        
+        # Method 1: Search by username
         try:
-            user = User.objects.get(username=username)
-            if not hasattr(user, 'parentprofile'):
-                raise ValidationError("This user is not a registered parent.")
-            
-            # Check if parent has any children
-            parent_profile = user.parentprofile
-            if not parent_profile.children.exists():
-                raise ValidationError("This parent has no registered children.")
-                
-            return username
+            user = User.objects.get(username=query)
+            if hasattr(user, 'parentprofile'):
+                parent_profile = user.parentprofile
+                search_method = 'username'
         except User.DoesNotExist:
-            raise ValidationError("Parent not found with this username.")
+            pass
+        
+        # Method 2: Search by surname (last_name)
+        if not parent_profile:
+            try:
+                parent_profile = ParentProfile.objects.get(last_name__iexact=query)
+                search_method = 'surname'
+            except ParentProfile.DoesNotExist:
+                pass
+            except ParentProfile.MultipleObjectsReturned:
+                # Multiple parents with same surname - provide helpful error
+                matching_parents = ParentProfile.objects.filter(last_name__iexact=query)
+                usernames = [p.user.username for p in matching_parents[:5]]  # Show up to 5
+                raise ValidationError(f"Multiple families found with surname '{query}'. Try searching by username instead: {', '.join(usernames)}")
+        
+        # Method 3: Search by phone number
+        if not parent_profile:
+            # Clean phone number (remove spaces, dashes, etc.)
+            clean_phone = ''.join(filter(str.isdigit, query))
+            if clean_phone:
+                try:
+                    parent_profile = ParentProfile.objects.get(phone_number=clean_phone)
+                    search_method = 'phone'
+                except ParentProfile.DoesNotExist:
+                    pass
+                except ParentProfile.MultipleObjectsReturned:
+                    raise ValidationError(f"Multiple parents found with phone number '{query}'. Please use a more specific search.")
+        
+        # If still not found, provide helpful error message
+        if not parent_profile:
+            raise ValidationError(f"No parent found matching '{query}'. Please check the username, surname, or phone number and try again.")
+        
+        # Check if parent has any children
+        if not parent_profile.children.exists():
+            raise ValidationError(f"Parent '{parent_profile.first_name} {parent_profile.last_name}' has no registered children.")
+        
+        # Store the found parent profile for later use
+        self._found_parent = parent_profile
+        self._search_method = search_method
+        
+        return query
     
     def get_parent_and_children(self):
         """Get parent profile and children for manual sign-in"""
-        username = self.cleaned_data['parent_username']
-        user = User.objects.get(username=username)
-        parent_profile = user.parentprofile
-        children = parent_profile.children.all()
-        return parent_profile, children
+        if hasattr(self, '_found_parent'):
+            parent_profile = self._found_parent
+            children = parent_profile.children.all()
+            return parent_profile, children
+        else:
+            raise ValidationError("No parent data available. Please search again.")
+    
+    def get_search_info(self):
+        """Get information about how the parent was found"""
+        if hasattr(self, '_found_parent') and hasattr(self, '_search_method'):
+            return {
+                'parent': self._found_parent,
+                'method': self._search_method,
+                'found_by': {
+                    'username': f"Username: {self._found_parent.user.username}",
+                    'surname': f"Surname: {self._found_parent.last_name}",
+                    'phone': f"Phone: {self._found_parent.phone_number}"
+                }[self._search_method]
+            }
+        return None
 
 
 class PasswordResetRequestForm(forms.Form):

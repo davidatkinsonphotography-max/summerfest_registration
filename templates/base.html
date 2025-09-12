@@ -154,21 +154,25 @@
             }
             
             // Show/hide church name based on church attendance
-            const churchRadios = document.querySelectorAll('[name="attends_church_regularly"]');
+            const churchRadios = document.querySelectorAll('[name="church_attendance_choice"]');
             const whichChurchField = document.querySelector('[name="which_church"]');
             
             if (churchRadios.length && whichChurchField) {
                 const whichChurchContainer = whichChurchField.closest('.mb-3');
                 
                 function toggleChurchField() {
-                    const selectedValue = document.querySelector('[name="attends_church_regularly"]:checked');
-                    if (selectedValue && selectedValue.value === 'True') {
+                    const selectedValue = document.querySelector('[name="church_attendance_choice"]:checked');
+                    if (selectedValue && selectedValue.value === 'other') {
                         whichChurchContainer.style.display = 'block';
                         whichChurchField.required = true;
                     } else {
                         whichChurchContainer.style.display = 'none';
                         whichChurchField.required = false;
-                        whichChurchField.value = '';
+                        if (selectedValue && selectedValue.value === 'lighthouse') {
+                            whichChurchField.value = 'Lighthouse Church';
+                        } else {
+                            whichChurchField.value = '';
+                        }
                     }
                 }
                 

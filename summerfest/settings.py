@@ -10,7 +10,6 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "summerfest.settings")
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,14 +17,16 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
     'django-insecure-ui-q_ou#$%!n-c1r1lmtkvc-x#q4i&c!f)$dsf3nj5zu1(e#g$'
 )
 
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() != 'false'
 
+# Allowed hosts for production
 ALLOWED_HOSTS = ['atkinsondp.pythonanywhere.com']
 
 # Application definition
@@ -92,9 +93,9 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']  # source static folder
-STATIC_ROOT = BASE_DIR / 'staticfiles'    # where collectstatic will copy
+STATIC_URL = '/static/'                  # URL to access static files
+STATICFILES_DIRS = [BASE_DIR / 'static'] # source static folder
+STATIC_ROOT = BASE_DIR / 'staticfiles'   # destination for collectstatic
 
 # Media files (uploads, QR codes, etc.)
 MEDIA_URL = '/media/'
@@ -123,12 +124,14 @@ if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_HOST = 'smtp.gmail.com'  # replace with your SMTP server if needed
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 
+DEFAULT_FROM_EMAIL = 'Summerfest Registration <summerfest@example.com>'
+SERVER_EMAIL = 'summerfest@example.com'
 DEFAULT_FROM_EMAIL = 'Summerfest Registration <summerfest@example.com>'
 SERVER_EMAIL = 'summerfest@example.com'
 

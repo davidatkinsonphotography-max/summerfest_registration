@@ -30,11 +30,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-ui-q_ou#$%!n-c
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Set to False for production
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'false'
 
 # Add your PythonAnywhere domain here for production
 ALLOWED_HOSTS = []  # ADD: ['yourusername.pythonanywhere.com']
-
+ALLOWED_HOSTS = ['atkinsondp.pythonanywhere.com']
 
 # Application definition
 

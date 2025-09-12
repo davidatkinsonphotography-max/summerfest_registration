@@ -170,3 +170,7 @@ else:
 # Default email settings - CHANGE THESE FOR PRODUCTION
 DEFAULT_FROM_EMAIL = 'Summerfest Registration <summerfest@example.com>'  # CHANGE TO ACTUAL EMAIL
 SERVER_EMAIL = 'summerfest@example.com'  # CHANGE TO ACTUAL EMAIL
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'

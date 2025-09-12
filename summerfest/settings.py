@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "summerfest.settings")
 
 # Load environment variables from .env file
 load_dotenv()

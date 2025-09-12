@@ -19,6 +19,10 @@ from django.contrib.auth import views as auth_views
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
+
+def home(request):
+    return HttpResponse("Welcome to Summerfest Registration!")
 
 urlpatterns = [
     path('admin/', admin.site.urls),

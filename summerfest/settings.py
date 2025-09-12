@@ -24,10 +24,11 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() != 'false'
 
 # Allowed hosts for production
-ALLOWED_HOSTS = ['atkinsondp.pythonanywhere.com']
+ALLOWED_HOSTS = ['atkinsondp.pythonanywhere.com', 'www.atkinsondp.pythonanywhere.com', 'localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [

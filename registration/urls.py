@@ -7,6 +7,10 @@ from .payment_views import (
 )
 from .export_views_fixed import export_dashboard, export_all_data_csv
 from .pass_views import purchase_pass, pass_purchase_success, pass_purchase_cancel, my_passes
+from django.http import HttpResponse
+
+def home(request):
+    return HttpResponse("Welcome to Summerfest Registration!")
 
 
 urlpatterns = [

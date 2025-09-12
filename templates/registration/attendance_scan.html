@@ -5,32 +5,58 @@
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h3 class="mb-0"><i class="bi bi-qr-code-scan"></i> Child Check-in Scanner</h3>
                 </div>
                 <div class="card-body">
+                    
+                    <!-- Camera Scanner Section -->
                     <div class="text-center mb-4">
-                        <p class="lead">Scan a child's QR code to check them in</p>
+                        <button id="startScanBtn" class="btn btn-success btn-lg me-3">
+                            <i class="bi bi-camera"></i> Start Camera Scanner
+                        </button>
+                        <button id="stopScanBtn" class="btn btn-secondary btn-lg" style="display: none;">
+                            <i class="bi bi-stop-circle"></i> Stop Scanner
+                        </button>
                     </div>
                     
-                    <form id="scanForm" method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="{{ form.qr_code_data.id_for_label }}" class="form-label">QR Code Data</label>
-                            {{ form.qr_code_data }}
-                            <small class="form-text text-muted">
-                                Focus this field and scan the QR code, or enter the code manually
-                            </small>
+                    <!-- Camera View -->
+                    <div id="cameraSection" style="display: none;" class="text-center mb-4">
+                        <div class="position-relative d-inline-block">
+                            <div id="preview" style="width: 400px; height: 300px; border: 1px solid #ccc; border-radius: 8px;"></div>
                         </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-check-circle"></i> Check In Child
-                            </button>
+                        <div class="mt-2">
+                            <small class="text-muted">Point camera at QR code</small>
                         </div>
-                    </form>
+                    </div>
+                    
+                    <!-- Manual Entry Fallback -->
+                    <div class="text-center mb-3">
+                        <button id="toggleManualBtn" class="btn btn-outline-secondary">
+                            <i class="bi bi-keyboard"></i> Enter Code Manually
+                        </button>
+                    </div>
+                    
+                    <div id="manualEntrySection" style="display: none;">
+                        <form id="scanForm" method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="{{ form.qr_code_data.id_for_label }}" class="form-label">QR Code Data</label>
+                                {{ form.qr_code_data }}
+                                <small class="form-text text-muted">
+                                    Enter or paste the QR code data manually
+                                </small>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-check-circle"></i> Check In Child
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                     
                     <!-- Scan Result Display -->
                     <div id="scanResult" class="mt-4" style="display: none;">
@@ -44,19 +70,33 @@
             <!-- Instructions -->
             <div class="card mt-3">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Instructions</h5>
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> How to Use</h5>
                 </div>
                 <div class="card-body">
-                    <ol>
-                        <li>Click in the "QR Code Data" field above</li>
-                        <li>Use a QR code scanner (phone app) to scan the child's QR code</li>
-                        <li>The scanned data will automatically appear in the field</li>
-                        <li>Click "Check In Child" to register their attendance</li>
-                    </ol>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-camera text-success"></i> Camera Scanner (Recommended)</h6>
+                            <ol>
+                                <li>Click "Start Camera Scanner"</li>
+                                <li>Allow camera access when prompted</li>
+                                <li>Point camera at child's QR code</li>
+                                <li>QR code will be automatically scanned and processed</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-keyboard text-info"></i> Manual Entry (Fallback)</h6>
+                            <ol>
+                                <li>Click "Enter Code Manually"</li>
+                                <li>Use phone QR scanner app to read code</li>
+                                <li>Copy and paste the code into the text field</li>
+                                <li>Click "Check In Child"</li>
+                            </ol>
+                        </div>
+                    </div>
                     
-                    <div class="alert alert-info">
+                    <div class="alert alert-info mt-3">
                         <strong>Note:</strong> Each child can only be checked in once per day. 
-                        If a child is already checked in, you'll see a notification.
+                        Camera access is required for automatic scanning.
                     </div>
                 </div>
             </div>
@@ -66,19 +106,104 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Include QR Scanner Library -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const startScanBtn = document.getElementById('startScanBtn');
+    const stopScanBtn = document.getElementById('stopScanBtn');
+    const cameraSection = document.getElementById('cameraSection');
+    const toggleManualBtn = document.getElementById('toggleManualBtn');
+    const manualEntrySection = document.getElementById('manualEntrySection');
     const form = document.getElementById('scanForm');
     const resultDiv = document.getElementById('scanResult');
     const resultAlert = document.getElementById('resultAlert');
     const resultMessage = document.getElementById('resultMessage');
-    const qrInput = document.getElementById('qr-input');
     
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+    let html5QrcodeScanner = null;
+
+    // Start camera scanner
+    startScanBtn.addEventListener('click', function() {
+        startCameraScanner();
+    });
+
+    // Stop camera scanner
+    stopScanBtn.addEventListener('click', function() {
+        stopCameraScanner();
+    });
+
+    // Toggle manual entry
+    toggleManualBtn.addEventListener('click', function() {
+        if (manualEntrySection.style.display === 'none') {
+            manualEntrySection.style.display = 'block';
+            toggleManualBtn.innerHTML = '<i class="bi bi-camera"></i> Use Camera Instead';
+            stopCameraScanner();
+        } else {
+            manualEntrySection.style.display = 'none';
+            toggleManualBtn.innerHTML = '<i class="bi bi-keyboard"></i> Enter Code Manually';
+        }
+    });
+
+    function startCameraScanner() {
+        const config = { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.333334,
+            disableFlip: false
+        };
+
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            "preview", 
+            config, 
+            false
+        );
         
-        const formData = new FormData(form);
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
         
+        // Update UI
+        startScanBtn.style.display = 'none';
+        stopScanBtn.style.display = 'inline-block';
+        cameraSection.style.display = 'block';
+        manualEntrySection.style.display = 'none';
+    }
+
+    function stopCameraScanner() {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear().then(ignore => {
+                // Scanner stopped
+            }).catch(err => {
+                console.log("Error stopping scanner:", err);
+            });
+            html5QrcodeScanner = null;
+        }
+        
+        // Update UI
+        startScanBtn.style.display = 'inline-block';
+        stopScanBtn.style.display = 'none';
+        cameraSection.style.display = 'none';
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        // Stop scanning immediately after successful scan
+        stopCameraScanner();
+        
+        // Process the scanned QR code
+        processQRCode(decodedText);
+    }
+
+    function onScanFailure(error) {
+        // Handle scan failure (usually just means no QR code in view)
+        // Don't log every failure as it's normal
+    }
+
+    function processQRCode(qrCodeData) {
+        // Create form data
+        const formData = new FormData();
+        formData.append('qr_code_data', qrCodeData);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Submit to server
         fetch('{% url "attendance_scan" %}', {
             method: 'POST',
             body: formData,
@@ -88,54 +213,76 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            resultDiv.style.display = 'block';
-            
-            if (data.status === 'success') {
-                resultAlert.className = 'alert alert-success';
-                resultMessage.innerHTML = `
-                    <h5><i class="bi bi-check-circle"></i> Success!</h5>
-                    <p><strong>${data.child_name}</strong> has been checked in at ${data.time}</p>
-                    <p>Class: ${data.class}</p>
-                `;
-            } else if (data.status === 'already_checked_in') {
-                resultAlert.className = 'alert alert-warning';
-                resultMessage.innerHTML = `
-                    <h5><i class="bi bi-exclamation-triangle"></i> Already Checked In</h5>
-                    <p><strong>${data.child_name}</strong> is already checked in today</p>
-                    <p>Class: ${data.class}</p>
-                `;
-            } else {
-                resultAlert.className = 'alert alert-danger';
-                resultMessage.innerHTML = `
-                    <h5><i class="bi bi-x-circle"></i> Error</h5>
-                    <p>${data.message}</p>
-                `;
-            }
-            
-            // Clear the input for next scan
-            qrInput.value = '';
-            qrInput.focus();
+            showResult(data);
         })
         .catch(error => {
-            resultDiv.style.display = 'block';
+            showError('An error occurred while processing the scan');
+        });
+    }
+
+    function showResult(data) {
+        resultDiv.style.display = 'block';
+        
+        if (data.status === 'success') {
+            resultAlert.className = 'alert alert-success';
+            resultMessage.innerHTML = `
+                <h5><i class="bi bi-check-circle"></i> Success!</h5>
+                <p><strong>${data.child_name}</strong> has been checked in at ${data.time}</p>
+                <p>Class: ${data.class}</p>
+            `;
+        } else if (data.status === 'already_checked_in') {
+            resultAlert.className = 'alert alert-warning';
+            resultMessage.innerHTML = `
+                <h5><i class="bi bi-exclamation-triangle"></i> Already Checked In</h5>
+                <p><strong>${data.child_name}</strong> is already checked in today</p>
+                <p>Class: ${data.class}</p>
+            `;
+        } else if (data.status === 'insufficient_funds') {
+            resultAlert.className = 'alert alert-danger';
+            resultMessage.innerHTML = `
+                <h5><i class="bi bi-credit-card"></i> Insufficient Funds</h5>
+                <p><strong>${data.child_name}</strong> - ${data.message}</p>
+                <p>Current balance: $${data.balance}</p>
+                <p>Required: $${data.required}</p>
+            `;
+        } else {
             resultAlert.className = 'alert alert-danger';
             resultMessage.innerHTML = `
                 <h5><i class="bi bi-x-circle"></i> Error</h5>
-                <p>An error occurred while processing the scan</p>
+                <p>${data.message}</p>
             `;
-        });
-    });
-    
-    // Auto-focus the input field
-    qrInput.focus();
-    
-    // Auto-submit when QR code is scanned (assuming scanner adds newline)
-    qrInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            form.dispatchEvent(new Event('submit'));
         }
-    });
+        
+        // Auto-hide result after 5 seconds and restart scanner
+        setTimeout(function() {
+            resultDiv.style.display = 'none';
+            if (!manualEntrySection.style.display || manualEntrySection.style.display === 'none') {
+                startCameraScanner();
+            }
+        }, 5000);
+    }
+
+    function showError(message) {
+        resultDiv.style.display = 'block';
+        resultAlert.className = 'alert alert-danger';
+        resultMessage.innerHTML = `
+            <h5><i class="bi bi-x-circle"></i> Error</h5>
+            <p>${message}</p>
+        `;
+    }
+
+    // Manual form submission
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const qrInput = form.querySelector('input[name="qr_code_data"]');
+            if (qrInput.value) {
+                processQRCode(qrInput.value);
+                qrInput.value = ''; // Clear input
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

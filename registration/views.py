@@ -267,7 +267,13 @@ def attendance_scan(request):
                 'time': attendance.time_in.strftime('%H:%M'),
                 'charge': f'${charge_amount}' if charge_amount > 0 else 'Free',
                 'charge_reason': charge_reason,
-                'remaining_balance': f'${child.parent.payment_account.balance if hasattr(child.parent, "payment_account") else "0.00"}'
+                'remaining_balance': f'${child.parent.payment_account.balance if hasattr(child.parent, "payment_account") else "0.00"}',
+                # Additional child information for persistent check-in list
+                'dietary_needs': child.has_dietary_needs,
+                'medical_needs': child.has_medical_needs,
+                'photo_consent': child.photo_consent,
+                'dietary_details': child.dietary_needs_detail or '',
+                'medical_details': child.medical_allergy_details or ''
             })
         else:
             return JsonResponse({
@@ -536,6 +542,7 @@ def manual_sign_in(request):
     """Manual sign-in for children when parents forget QR codes"""
     parent_profile = None
     children = None
+    search_info = None
     
     if request.method == 'POST':
         if 'lookup' in request.POST:
@@ -544,6 +551,8 @@ def manual_sign_in(request):
             if form.is_valid():
                 from .payment_calculator import PaymentCalculator
                 parent_profile, children = form.get_parent_and_children()
+                search_info = form.get_search_info()
+                
                 # Add today's attendance data for each child
                 if children:
                     today = PaymentCalculator.get_current_aest_date()
@@ -560,17 +569,19 @@ def manual_sign_in(request):
                         })
                     children = children_with_attendance
                 # Keep form data for the template
-                form = ManualSignInForm(initial={'parent_username': form.cleaned_data['parent_username']})
+                form = ManualSignInForm(initial={'search_query': form.cleaned_data['search_query']})
         
         elif 'sign_in' in request.POST:
             # Child sign-in processing
             child_ids = request.POST.getlist('child_ids')
-            username = request.POST.get('username')
+            search_query = request.POST.get('search_query')
             
-            if child_ids and username:
-                try:
-                    user = User.objects.get(username=username)
-                    parent_profile = user.parentprofile
+            if child_ids and search_query:
+                # Re-lookup parent using search query
+                temp_form = ManualSignInForm({'search_query': search_query})
+                if temp_form.is_valid():
+                    parent_profile, _ = temp_form.get_parent_and_children()
+                    search_info = temp_form.get_search_info()
                     signed_in_children = []
                     payment_errors = []
                     
@@ -649,10 +660,9 @@ def manual_sign_in(request):
                                 'is_checked_in': today_attendance is not None
                             })
                         children = children_with_attendance
-                        form = ManualSignInForm(initial={'parent_username': username})
-                        
-                except User.DoesNotExist:
-                    messages.error(request, "Parent not found.")
+                        form = ManualSignInForm(initial={'search_query': search_query})
+                else:
+                    messages.error(request, "Invalid search query.")
             else:
                 messages.error(request, "Please select at least one child to sign in.")
     else:
@@ -662,6 +672,7 @@ def manual_sign_in(request):
         'form': form,
         'parent_profile': parent_profile,
         'children': children,
+        'search_info': search_info,
     }
     
     return render(request, 'registration/manual_sign_in.html', context)

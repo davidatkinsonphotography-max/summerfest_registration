@@ -717,8 +717,10 @@ def manual_sign_in(request):
                         form = ManualSignInForm(initial={'search_query': search_query})
                 else:
                     messages.error(request, "Invalid search query.")
+                    form = ManualSignInForm()
             else:
                 messages.error(request, "Please select at least one child to sign in.")
+                form = ManualSignInForm()
     else:
         form = ManualSignInForm()
     
@@ -818,6 +820,18 @@ def manual_checkin_child(request, child_id):
         return JsonResponse({'status': 'error', 'message': 'Child not found'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})
+
+
+@login_required
+def custom_logout(request):
+    """Custom logout view to ensure proper redirect"""
+    from django.contrib.auth import logout
+    from django.shortcuts import redirect
+    from django.contrib import messages
+    
+    logout(request)
+    messages.success(request, "You have been successfully logged out.")
+    return redirect('home')
 
 
 @login_required

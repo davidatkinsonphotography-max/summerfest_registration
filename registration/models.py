@@ -200,6 +200,17 @@ class Child(models.Model):
         self.qr_code_image.save(filename, File(buffer), save=False)
         super().save(update_fields=['qr_code_image'])
     
+    def get_class_short_name(self):
+        """Get abbreviated class name for admin/teacher views"""
+        class_mapping = {
+            'creche': 'Creche',
+            'tackers': 'Little Tackers', 
+            'minis': 'Minis',
+            'nitro': 'Nitro',
+            '56ers': '56ers',
+        }
+        return class_mapping.get(self.child_class, self.get_child_class_display())
+    
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.get_child_class_display()})"
 
@@ -271,6 +282,17 @@ class TeacherClassAssignment(models.Model):
     class Meta:
         unique_together = ['teacher', 'class_code']
     
+    def get_class_short_name(self):
+        """Get abbreviated class name for admin/teacher views"""
+        class_mapping = {
+            'creche': 'Creche',
+            'tackers': 'Little Tackers', 
+            'minis': 'Minis',
+            'nitro': 'Nitro',
+            '56ers': '56ers',
+        }
+        return class_mapping.get(self.class_code, self.get_class_code_display())
+    
     def __str__(self):
         return f"{self.teacher.user.get_full_name()} - {self.get_class_code_display()}"
 
@@ -286,9 +308,11 @@ class TeacherProfile(models.Model):
             return f"{self.user.get_full_name()} - {', '.join(classes)}"
         return f"{self.user.get_full_name()} - No classes assigned"
     
-    def get_assigned_class_names(self):
+    def get_assigned_class_names(self, abbreviated=False):
         """Get list of assigned class display names"""
         assignments = self.class_assignments.all()
+        if abbreviated:
+            return [assignment.get_class_short_name() for assignment in assignments]
         return [assignment.get_class_code_display() for assignment in assignments]
     
     def get_assigned_class_codes(self):

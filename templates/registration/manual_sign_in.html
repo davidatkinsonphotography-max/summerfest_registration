@@ -28,13 +28,30 @@
                             <form method="post">
                                 {% csrf_token %}
                                 
+                                <!-- Search Type Selection -->
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.search_type.label }}</label>
+                                    <div class="row">
+                                        {% for choice in form.search_type %}
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                {{ choice.tag }}
+                                                <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                    {{ choice.choice_label }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
                                 <div class="row">
                                     <div class="col-md-8">
                                         <label for="{{ form.search_query.id_for_label }}" class="form-label">
                                             {{ form.search_query.label }}
                                         </label>
                                         {{ form.search_query }}
-                                        <div class="form-text">{{ form.search_query.help_text }}</div>
+                                        <div class="form-text" id="search-help-text">{{ form.search_query.help_text }}</div>
                                         {% if form.search_query.errors %}
                                             <div class="text-danger small">{{ form.search_query.errors }}</div>
                                         {% endif %}
@@ -88,7 +105,7 @@
                                                                {% if child_data.is_checked_in %}disabled{% endif %}>
                                                         <label class="form-check-label" for="child_{{ child_data.child.id }}">
                                                             <strong>{{ child_data.child.first_name }} {{ child_data.child.last_name }}</strong>
-                                                            <br><small class="text-muted">{{ child_data.child.get_child_class_display }} • DOB: {{ child_data.child.date_of_birth|date:"M j, Y" }}</small>
+                                                            <br><small class="text-muted">{{ child_data.child.get_class_short_name }} • DOB: {{ child_data.child.date_of_birth|date:"M j, Y" }}</small>
                                                         </label>
                                                     </div>
                                                     
@@ -142,7 +159,7 @@
                                            class="btn btn-outline-info me-2">
                                             <i class="bi bi-wallet2"></i> View Account
                                         </a>
-                                        <a href="{% url 'manual_payment' %}" class="btn btn-outline-warning me-2">
+                                        <a href="{% url 'manual_payment' %}?parent_username={{ parent_profile.user.username }}" class="btn btn-outline-warning me-2">
                                             <i class="bi bi-cash-stack"></i> Add Funds
                                         </a>
                                         <button type="submit" name="sign_in" class="btn btn-success btn-lg">
@@ -199,6 +216,34 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchInput) {
         searchInput.focus();
     }
+    
+    // Update help text and placeholder based on search type
+    const searchTypeInputs = document.querySelectorAll('input[name="search_type"]');
+    const searchQuery = document.getElementById('{{ form.search_query.id_for_label }}');
+    const helpText = document.getElementById('search-help-text');
+    
+    function updateSearchUI() {
+        const selectedType = document.querySelector('input[name="search_type"]:checked').value;
+        
+        if (selectedType === 'child') {
+            searchQuery.placeholder = 'Enter child\'s first name (e.g., "Ethan")';
+            helpText.textContent = 'Search for children by their first name. Partial matches work (e.g., "Eth" will find all Ethans)';
+        } else {
+            searchQuery.placeholder = 'Enter username, surname, or phone number';
+            helpText.textContent = 'Search by username, family surname, or phone number';
+        }
+        
+        // Clear previous search when switching types
+        searchQuery.value = '';
+    }
+    
+    // Set initial state
+    updateSearchUI();
+    
+    // Update when search type changes
+    searchTypeInputs.forEach(function(input) {
+        input.addEventListener('change', updateSearchUI);
+    });
 });
 
 // Select all children by default when parent is found

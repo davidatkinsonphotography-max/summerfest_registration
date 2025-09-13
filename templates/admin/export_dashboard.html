@@ -106,16 +106,17 @@
                                         <button class="btn btn-outline-info btn-sm" onclick="alert('Coming soon! Use Complete Report for now.')">
                                             <i class="bi bi-person-hearts"></i> Children Only
                                         </button>
-                                        <button class="btn btn-outline-info btn-sm" onclick="alert('Coming soon! Use Complete Report for now.')">
-                                            <i class="bi bi-calendar-check"></i> Attendance Records
-                                        </button>
-                                        <button class="btn btn-outline-info btn-sm" onclick="alert('Coming soon! Use Complete Report for now.')">
-                                            <i class="bi bi-credit-card"></i> Payment Records
-                                        </button>
+                                        <a href="{% url 'export_attendance_detailed' %}" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-calendar-check"></i> Detailed Attendance Report
+                                        </a>
+                                        <a href="{% url 'export_payments_detailed' %}" class="btn btn-outline-warning btn-sm">
+                                            <i class="bi bi-credit-card"></i> Detailed Payments Report
+                                        </a>
                                     </div>
                                     
                                     <p class="text-muted small mt-2">
-                                        Individual exports coming soon. Use the Complete Report for all data needs.
+                                        <strong>Available:</strong> Detailed Attendance and Payment reports with enhanced data.<br>
+                                        <strong>Coming soon:</strong> Individual Family and Children exports.
                                     </p>
                                 </div>
                             </div>

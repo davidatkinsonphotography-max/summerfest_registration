@@ -13,7 +13,7 @@
                 <div class="card-body">
                     <div class="text-center mb-4">
                         <h4>{{ child.first_name }} {{ child.last_name }}</h4>
-                        <p class="text-muted">{{ child.get_child_class_display }}</p>
+                        <p class="text-muted">{{ child.get_class_short_name }}</p>
                         <p><strong>Checked in at:</strong> {{ attendance.time_in|time:"H:i" }}</p>
                     </div>
                     

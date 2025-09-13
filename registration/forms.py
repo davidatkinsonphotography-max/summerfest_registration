@@ -306,10 +306,23 @@ class AddFundsForm(forms.Form):
 class ManualPaymentForm(forms.Form):
     """Form for staff to record manual payments (cash/eftpos)"""
     
-    parent_username = forms.CharField(
+    search_type = forms.ChoiceField(
+        choices=[
+            ('username', 'Username'),
+            ('surname', 'Surname'),
+            ('phone', 'Phone Number'),
+            ('qr', 'QR Code Scan')
+        ],
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        initial='username',
+        label="Search Type"
+    )
+    
+    parent_search = forms.CharField(
         max_length=150,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter parent username'}),
-        label="Parent Username"
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter search term'}),
+        label="Find Parent",
+        help_text="Search by username, surname, phone number, or scan QR code"
     )
     
     amount = forms.DecimalField(
@@ -332,36 +345,177 @@ class ManualPaymentForm(forms.Form):
         label="Notes"
     )
     
-    def clean_parent_username(self):
-        username = self.cleaned_data['parent_username']
+    def clean_parent_search(self):
+        search_term = self.cleaned_data['parent_search'].strip()
+        search_type = self.cleaned_data.get('search_type', 'username')
+        
+        if not search_term:
+            raise ValidationError("Please enter a search term.")
+        
+        # Handle QR code search
+        if search_type == 'qr':
+            return self._search_by_qr_code(search_term)
+        else:
+            return self._search_by_parent_info(search_term, search_type)
+    
+    def _search_by_qr_code(self, qr_data):
+        """Search parent by child's QR code"""
+        # Check if it's a valid QR code format
+        if not qr_data.startswith('summerfest_child_'):
+            raise ValidationError("Invalid QR code format. QR codes should start with 'summerfest_child_'")
+        
         try:
-            user = User.objects.get(username=username)
-            if not hasattr(user, 'parentprofile'):
-                raise ValidationError("This user is not a registered parent.")
-            return username
-        except User.DoesNotExist:
-            raise ValidationError("Parent not found with this username.")
+            uuid_part = qr_data.replace('summerfest_child_', '')
+            child = Child.objects.get(qr_code_id=uuid_part)
+            parent_profile = child.parent
+            
+            # Store found parent for later use
+            self._found_parent = parent_profile
+            self._search_method = 'qr_code'
+            self._found_via_child = child
+            
+            return qr_data
+        except Child.DoesNotExist:
+            raise ValidationError("No child found with this QR code.")
+    
+    def _search_by_parent_info(self, search_term, search_type):
+        """Search parent by username, surname, or phone number"""
+        parent_profile = None
+        
+        if search_type == 'username':
+            try:
+                user = User.objects.get(username=search_term)
+                if hasattr(user, 'parentprofile'):
+                    parent_profile = user.parentprofile
+                else:
+                    raise ValidationError("This user is not a registered parent.")
+            except User.DoesNotExist:
+                raise ValidationError(f"No user found with username '{search_term}'.")
+        
+        elif search_type == 'surname':
+            try:
+                parent_profile = ParentProfile.objects.get(last_name__iexact=search_term)
+            except ParentProfile.DoesNotExist:
+                raise ValidationError(f"No parent found with surname '{search_term}'.")
+            except ParentProfile.MultipleObjectsReturned:
+                matching_parents = ParentProfile.objects.filter(last_name__iexact=search_term)
+                usernames = [p.user.username for p in matching_parents[:5]]
+                raise ValidationError(f"Multiple parents found with surname '{search_term}'. Use username search instead: {', '.join(usernames)}")
+        
+        elif search_type == 'phone':
+            # Clean phone number (remove spaces, dashes, etc.)
+            clean_phone = ''.join(filter(str.isdigit, search_term))
+            if not clean_phone:
+                raise ValidationError("Please enter a valid phone number.")
+            
+            try:
+                parent_profile = ParentProfile.objects.get(phone_number=clean_phone)
+            except ParentProfile.DoesNotExist:
+                raise ValidationError(f"No parent found with phone number '{search_term}'.")
+            except ParentProfile.MultipleObjectsReturned:
+                raise ValidationError(f"Multiple parents found with phone number '{search_term}'. Please use a more specific search.")
+        
+        if parent_profile:
+            # Store found parent for later use
+            self._found_parent = parent_profile
+            self._search_method = search_type
+            
+            return search_term
+        else:
+            raise ValidationError(f"No parent found matching '{search_term}'.")
+    
+    def get_parent_profile(self):
+        """Get the found parent profile"""
+        if hasattr(self, '_found_parent'):
+            return self._found_parent
+        return None
+    
+    def get_search_info(self):
+        """Get information about how the parent was found"""
+        if hasattr(self, '_found_parent') and hasattr(self, '_search_method'):
+            found_by_mapping = {
+                'username': f"Username: {self._found_parent.user.username}",
+                'surname': f"Surname: {self._found_parent.last_name}",
+                'phone': f"Phone: {self._found_parent.phone_number}",
+                'qr_code': f"QR Code: {getattr(self, '_found_via_child', {}).first_name if hasattr(self, '_found_via_child') else 'N/A'}'s QR code"
+            }
+            
+            return {
+                'parent': self._found_parent,
+                'method': self._search_method,
+                'found_by': found_by_mapping.get(self._search_method, f"Method: {self._search_method}")
+            }
+        return None
 
 
 class ManualSignInForm(forms.Form):
     """Form for staff to manually sign in children when parents forget QR codes"""
     
+    search_type = forms.ChoiceField(
+        choices=[
+            ('parent', 'Search by Parent'),
+            ('child', 'Search by Child Name')
+        ],
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        initial='parent',
+        label="Search Type"
+    )
+    
     search_query = forms.CharField(
         max_length=150,
         widget=forms.TextInput(attrs={
             'class': 'form-control', 
-            'placeholder': 'Enter username, surname, or phone number'
+            'placeholder': 'Enter search term'
         }),
-        label="Search Parent",
-        help_text="You can search by username, family surname, or phone number"
+        label="Search",
+        help_text="Search by username, surname, phone number, or child name"
     )
     
     def clean_search_query(self):
         query = self.cleaned_data['search_query'].strip()
+        search_type = self.cleaned_data.get('search_type', 'parent')
         
         if not query:
             raise ValidationError("Please enter a search term.")
         
+        if search_type == 'child':
+            return self._search_by_child_name(query)
+        else:
+            return self._search_by_parent(query)
+    
+    def _search_by_child_name(self, query):
+        """Search for parent by child's name (case-insensitive, partial matches)"""
+        # Find children with names containing the query (case-insensitive)
+        children = Child.objects.filter(
+            first_name__icontains=query
+        ).select_related('parent').order_by('first_name', 'last_name')
+        
+        if not children.exists():
+            raise ValidationError(f"No children found with name containing '{query}'. Try a different search term.")
+        
+        if children.count() == 1:
+            # Only one child found - use their parent
+            child = children.first()
+            self._found_parent = child.parent
+            self._search_method = 'child_name'
+            self._matched_child = child
+            return query
+        else:
+            # Multiple children found - provide selection options
+            child_options = []
+            for child in children[:10]:  # Limit to 10 results
+                child_options.append(
+                    f"{child.first_name} {child.last_name} (Parent: {child.parent.first_name} {child.parent.last_name}, Username: {child.parent.user.username})"
+                )
+            
+            self._child_matches = children
+            raise ValidationError(
+                f"Multiple children found with name '{query}'. Please be more specific or use parent search with one of these usernames:\n\n" +
+                "\n".join(child_options)
+            )
+    
+    def _search_by_parent(self, query):
+        """Search for parent by username, surname, or phone number"""
         # Try to find parent by different methods
         parent_profile = None
         search_method = None
@@ -427,14 +581,17 @@ class ManualSignInForm(forms.Form):
     def get_search_info(self):
         """Get information about how the parent was found"""
         if hasattr(self, '_found_parent') and hasattr(self, '_search_method'):
+            found_by_mapping = {
+                'username': f"Username: {self._found_parent.user.username}",
+                'surname': f"Surname: {self._found_parent.last_name}",
+                'phone': f"Phone: {self._found_parent.phone_number}",
+                'child_name': f"Child name: {getattr(self, '_matched_child', {}).first_name if hasattr(self, '_matched_child') else 'N/A'}"
+            }
+            
             return {
                 'parent': self._found_parent,
                 'method': self._search_method,
-                'found_by': {
-                    'username': f"Username: {self._found_parent.user.username}",
-                    'surname': f"Surname: {self._found_parent.last_name}",
-                    'phone': f"Phone: {self._found_parent.phone_number}"
-                }[self._search_method]
+                'found_by': found_by_mapping.get(self._search_method, f"Method: {self._search_method}")
             }
         return None
 

@@ -34,11 +34,11 @@
                             <label for="classFilter" class="form-label">Filter by Class:</label>
                             <select id="classFilter" class="form-select" style="width: auto; display: inline-block;">
                                 <option value="" {% if not selected_class %}selected{% endif %}>All Classes</option>
-                                <option value="creche" {% if selected_class == 'creche' %}selected{% endif %}>Creche (0-2yrs)</option>
-                                <option value="tackers" {% if selected_class == 'tackers' %}selected{% endif %}>Little Tackers (3yrs-Kindy)</option>
-                                <option value="minis" {% if selected_class == 'minis' %}selected{% endif %}>Minis (Years 1-2)</option>
-                                <option value="nitro" {% if selected_class == 'nitro' %}selected{% endif %}>Nitro (Years 3-4)</option>
-                                <option value="56ers" {% if selected_class == '56ers' %}selected{% endif %}>56ers (Years 5-6)</option>
+                                <option value="creche" {% if selected_class == 'creche' %}selected{% endif %}>Creche</option>
+                                <option value="tackers" {% if selected_class == 'tackers' %}selected{% endif %}>Little Tackers</option>
+                                <option value="minis" {% if selected_class == 'minis' %}selected{% endif %}>Minis</option>
+                                <option value="nitro" {% if selected_class == 'nitro' %}selected{% endif %}>Nitro</option>
+                                <option value="56ers" {% if selected_class == '56ers' %}selected{% endif %}>56ers</option>
                             </select>
                         </div>
                         
@@ -64,7 +64,7 @@
                                                 <small class="text-muted">DOB: {{ data.child.date_of_birth|date:"M j, Y" }}</small>
                                             </td>
                                             <td style="width: 80px;">
-                                                <small style="line-height: 1.2;">{{ data.child.get_child_class_display }}</small>
+                                                <small style="line-height: 1.2;">{{ data.child.get_class_short_name }}</small>
                                             </td>
                                             <td style="width: 90px;">
                                                 {% if data.attendance %}

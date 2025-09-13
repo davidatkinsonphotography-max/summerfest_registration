@@ -7,12 +7,48 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.db.models import Q
 from decimal import Decimal
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.utils.crypto import get_random_string
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from .models import ParentProfile, Child, Attendance, TeacherProfile
 from .forms import ParentRegistrationForm, ChildRegistrationForm, AttendanceForm, CheckoutForm, ManualSignInForm, PasswordResetRequestForm
 from .test_data import create_test_parent, create_test_children, create_test_teacher, create_test_admin, get_test_credentials, cleanup_test_data
+
+def send_qr_code_email(child, parent_profile):
+    """Send QR code via email to parent"""
+    # Ensure QR code is generated
+    if not child.qr_code_image:
+        child.generate_qr_code()
+    
+    subject = f'Summerfest 2026 QR Code for {child.first_name}'
+    
+    # Email context
+    context = {
+        'child': child,
+        'parent_profile': parent_profile,
+        'qr_code_data': f'summerfest_child_{child.qr_code_id}',
+    }
+    
+    # Render HTML template
+    html_content = render_to_string('registration/emails/qr_code_email.html', context)
+    text_content = strip_tags(html_content)
+    
+    # Create email
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_content,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[parent_profile.email]
+    )
+    email.attach_alternative(html_content, "text/html")
+    
+    # Attach QR code image
+    if child.qr_code_image:
+        email.attach_file(child.qr_code_image.path)
+    
+    email.send()
 
 from django.shortcuts import render
 from django.http import Http404
@@ -133,7 +169,14 @@ def add_child(request):
             child = form.save(commit=False)
             child.parent = parent_profile
             child.save()
-            messages.success(request, f'{child.first_name} has been registered successfully!')
+            
+            # Send QR code email to parent
+            try:
+                send_qr_code_email(child, parent_profile)
+                messages.success(request, f'{child.first_name} has been registered successfully! QR code emailed to {parent_profile.email}')
+            except Exception as e:
+                messages.warning(request, f'{child.first_name} has been registered successfully! However, the QR code email could not be sent. You can view the QR code from your dashboard.')
+            
             return redirect('dashboard')
     else:
         form = ChildRegistrationForm()
@@ -417,7 +460,7 @@ def profile_edit(request):
             'phone_number': parent_profile.phone_number,
             'how_heard_about': parent_profile.how_heard_about,
             'additional_information': parent_profile.additional_information,
-            'attends_church_regularly': 'True' if parent_profile.attends_church_regularly else 'False',
+            'church_attendance_choice': 'lighthouse' if parent_profile.which_church == 'Lighthouse Church' else ('other' if parent_profile.attends_church_regularly else 'no'),
             'which_church': parent_profile.which_church,
             'emergency_contact_name': parent_profile.emergency_contact_name,
             'emergency_contact_phone': parent_profile.emergency_contact_phone,
@@ -431,7 +474,18 @@ def profile_edit(request):
 
 
 def site_map(request):
-    """Comprehensive site map for testing all functionality"""
+    """Comprehensive site map for testing all functionality - password protected"""
+    # Password protection for sitemap
+    if not request.session.get('sitemap_authenticated'):
+        if request.method == 'POST':
+            password = request.POST.get('password')
+            if password == 'Mk1sprite2bdi':
+                request.session['sitemap_authenticated'] = True
+            else:
+                messages.error(request, 'Incorrect password')
+                return render(request, 'registration/sitemap_password.html')
+        else:
+            return render(request, 'registration/sitemap_password.html')
     # Handle test data creation
     if request.GET.get('create'):
         create_type = request.GET.get('create')

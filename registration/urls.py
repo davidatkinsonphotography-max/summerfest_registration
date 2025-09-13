@@ -5,7 +5,7 @@ from .payment_views import (
     payment_dashboard, add_funds, payment_success, payment_cancel, 
     manual_payment, payment_lookup, stripe_webhook
 )
-from .export_views_fixed import export_dashboard, export_all_data_csv
+from .export_views_fixed import export_dashboard, export_all_data_csv, export_attendance_detailed_csv, export_payments_detailed_csv
 from .pass_views import purchase_pass, pass_purchase_success, pass_purchase_cancel, my_passes
 from django.http import HttpResponse
 
@@ -20,6 +20,7 @@ urlpatterns = [
     
     # Authentication
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', views.custom_logout, name='logout'),
     path('password_reset/', views.password_reset, name='password_reset'),
     
     # Parent dashboard
@@ -61,6 +62,8 @@ urlpatterns = [
     # Data export
     path('export/', export_dashboard, name='export_dashboard'),
     path('export/all/', export_all_data_csv, name='export_all_data'),
+    path('export/attendance/', export_attendance_detailed_csv, name='export_attendance_detailed'),
+    path('export/payments/', export_payments_detailed_csv, name='export_payments_detailed'),
     
     # Pass purchase system
     path('passes/purchase/', purchase_pass, name='purchase_pass'),

@@ -26,7 +26,6 @@ def home(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('logout/', auth_views.LogoutView.as_view(http_method_names=['get', 'post']), name='logout'),
     path('', include('registration.urls')),  # Include registration URLs
 ]
 

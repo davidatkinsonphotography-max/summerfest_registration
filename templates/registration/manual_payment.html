@@ -18,20 +18,101 @@
                         <br>This form is for recording payments received in person.
                     </div>
 
-                    <form method="post" id="manual-payment-form">
-                        {% csrf_token %}
-
-                        <!-- Parent Username Field -->
-                        <div class="mb-3">
-                            <label for="{{ form.parent_username.id_for_label }}" class="form-label">
-                                <i class="bi bi-person"></i> {{ form.parent_username.label }}
-                            </label>
-                            {{ form.parent_username }}
-                            <div class="form-text">Enter the parent's username (what they use to login)</div>
-                            {% if form.parent_username.errors %}
-                                <div class="text-danger small">{{ form.parent_username.errors }}</div>
-                            {% endif %}
+                    <!-- Step 1: Parent Lookup -->
+                    {% if not parent_profile %}
+                    <div class="card border-primary mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="bi bi-search"></i> Step 1: Find Parent</h5>
                         </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <!-- Search Type Selection -->
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.search_type.label }}</label>
+                                    <div class="row">
+                                        {% for choice in form.search_type %}
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                {{ choice.tag }}
+                                                <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                    {% if choice.choice_value == 'username' %}
+                                                        <i class="bi bi-person"></i>
+                                                    {% elif choice.choice_value == 'surname' %}
+                                                        <i class="bi bi-people"></i>
+                                                    {% elif choice.choice_value == 'phone' %}
+                                                        <i class="bi bi-telephone"></i>
+                                                    {% elif choice.choice_value == 'qr' %}
+                                                        <i class="bi bi-qr-code"></i>
+                                                    {% endif %}
+                                                    {{ choice.choice_label }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <label for="{{ form.parent_search.id_for_label }}" class="form-label">
+                                            {{ form.parent_search.label }}
+                                        </label>
+                                        {{ form.parent_search }}
+                                        <div class="form-text" id="search-help-text">{{ form.parent_search.help_text }}</div>
+                                        {% if form.parent_search.errors %}
+                                            <div class="text-danger small">{{ form.parent_search.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <button type="submit" name="lookup_parent" class="btn btn-primary btn-lg w-100">
+                                            <i class="bi bi-search"></i> Find Parent
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- QR Code Scanner -->
+                                <div id="qr-scanner" class="mt-3" style="display: none;">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6><i class="bi bi-camera"></i> QR Code Scanner</h6>
+                                            <button type="button" id="start-camera" class="btn btn-success btn-sm">
+                                                <i class="bi bi-camera"></i> Start Camera
+                                            </button>
+                                            <div id="camera-preview" style="max-width: 300px; margin-top: 10px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Step 2: Record Payment -->
+                    {% if parent_profile %}
+                    <div class="card border-success mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="bi bi-cash-stack"></i> Step 2: Record Payment</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Parent Information -->
+                            <div class="alert alert-success">
+                                <h6><i class="bi bi-person"></i> Parent Found:</h6>
+                                <strong>{{ parent_profile.first_name }} {{ parent_profile.last_name }}</strong> ({{ parent_profile.user.username }})
+                                <br><small>{{ parent_profile.email }} • {{ parent_profile.phone_number }}</small>
+                                {% if search_info %}
+                                    <br><small class="text-muted">Found by: {{ search_info.found_by }}</small>
+                                {% endif %}
+                                {% if parent_profile.payment_account %}
+                                    <br><strong>Current Balance:</strong> ${{ parent_profile.payment_account.balance }}
+                                {% endif %}
+                            </div>
+                            
+                            <form method="post" id="manual-payment-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="parent_search" value="{{ parent_profile.user.username }}">
+                                <input type="hidden" name="search_type" value="username">
 
                         <!-- Amount Field -->
                         <div class="mb-3">
@@ -46,6 +127,18 @@
                             {% if form.amount.errors %}
                                 <div class="text-danger small">{{ form.amount.errors }}</div>
                             {% endif %}
+                            
+                            <!-- Quick Amount Buttons -->
+                            <div class="mt-2">
+                                <small class="text-muted d-block mb-1"><i class="bi bi-lightning"></i> Quick amounts:</small>
+                                <div class="btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount('6.00')">$6</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount('12.00')">$12</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount('18.00')">$18</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount('20.00')">$20</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount('40.00')">$40</button>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Payment Method -->
@@ -84,43 +177,27 @@
                             {% endif %}
                         </div>
 
-                        <!-- Quick Amount Buttons -->
-                        <div class="card bg-light mb-4">
-                            <div class="card-body">
-                                <h6><i class="bi bi-lightning"></i> Quick Amounts</h6>
-                                <p class="small text-muted mb-2">Click to quickly set common payment amounts:</p>
-                                <div class="btn-group-sm" role="group">
-                                    <button type="button" class="btn btn-outline-primary" onclick="setAmount('6.00')">$6</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setAmount('12.00')">$12</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setAmount('18.00')">$18</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setAmount('20.00')">$20</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="setAmount('40.00')">$40</button>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'manual_payment' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> New Search
+                                    </a>
+                                    <button type="submit" name="record_payment" class="btn btn-warning btn-lg">
+                                        <i class="bi bi-check-circle"></i> Record Payment
+                                    </button>
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Action Buttons -->
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to Dashboard
-                            </a>
-                            <div>
-                                <a href="{% url 'payment_lookup' %}" class="btn btn-outline-info me-2">
-                                    <i class="bi bi-search"></i> Lookup Account
-                                </a>
-                                <button type="submit" class="btn btn-warning">
-                                    <i class="bi bi-check-circle"></i> Record Payment
-                                </button>
-                            </div>
+                                <!-- Form Errors -->
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger mt-3">
+                                        {{ form.non_field_errors }}
+                                    </div>
+                                {% endif %}
+                            </form>
                         </div>
-
-                        <!-- Form Errors -->
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger mt-3">
-                                {{ form.non_field_errors }}
-                            </div>
-                        {% endif %}
-                    </form>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -182,35 +259,88 @@ function setAmount(amount) {
     document.getElementById('{{ form.amount.id_for_label }}').value = amount;
 }
 
-// Form validation
-document.getElementById('manual-payment-form').addEventListener('submit', function(e) {
-    const username = document.getElementById('{{ form.parent_username.id_for_label }}').value.trim();
-    const amount = document.getElementById('{{ form.amount.id_for_label }}').value.trim();
-    const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+// Auto-focus on search field
+document.addEventListener('DOMContentLoaded', function() {
+    {% if not parent_profile %}
+    const searchInput = document.getElementById('{{ form.parent_search.id_for_label }}');
+    if (searchInput) {
+        searchInput.focus();
+    }
+    {% endif %}
     
-    if (!username || !amount || !paymentMethod) {
-        e.preventDefault();
-        alert('Please fill in all required fields (Username, Amount, and Payment Method).');
-        return false;
+    // Update help text and show/hide QR scanner based on search type
+    const searchTypeInputs = document.querySelectorAll('input[name="search_type"]');
+    const searchQuery = document.getElementById('{{ form.parent_search.id_for_label }}');
+    const helpText = document.getElementById('search-help-text');
+    const qrScanner = document.getElementById('qr-scanner');
+    
+    function updateSearchUI() {
+        const selectedType = document.querySelector('input[name="search_type"]:checked').value;
+        
+        if (selectedType === 'username') {
+            searchQuery.placeholder = 'Enter parent username';
+            helpText.textContent = 'Enter the username the parent uses to login';
+            qrScanner.style.display = 'none';
+        } else if (selectedType === 'surname') {
+            searchQuery.placeholder = 'Enter family surname';
+            helpText.textContent = 'Enter the family surname (last name)';
+            qrScanner.style.display = 'none';
+        } else if (selectedType === 'phone') {
+            searchQuery.placeholder = 'Enter phone number';
+            helpText.textContent = 'Enter the parent\'s phone number (digits only)';
+            qrScanner.style.display = 'none';
+        } else if (selectedType === 'qr') {
+            searchQuery.placeholder = 'Scan QR code or enter manually';
+            helpText.textContent = 'Use camera to scan child\'s QR code or enter QR code text manually';
+            qrScanner.style.display = 'block';
+        }
+        
+        // Clear previous search when switching types
+        searchQuery.value = '';
     }
     
-    // Confirm the payment details
-    const confirmation = confirm(`Confirm payment details:\nParent: ${username}\nAmount: $${amount}\nMethod: ${paymentMethod.value.toUpperCase()}\n\nProceed?`);
-    
-    if (!confirmation) {
-        e.preventDefault();
-        return false;
+    // Set initial state
+    if (searchTypeInputs.length > 0) {
+        updateSearchUI();
+        
+        // Update when search type changes
+        searchTypeInputs.forEach(function(input) {
+            input.addEventListener('change', updateSearchUI);
+        });
     }
-    
-    // Show loading state
-    const submitButton = e.target.querySelector('button[type="submit"]');
-    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Recording...';
-    submitButton.disabled = true;
 });
 
-// Auto-focus on username field
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('{{ form.parent_username.id_for_label }}').focus();
+// Payment form validation (only if parent is found)
+{% if parent_profile %}
+document.getElementById('manual-payment-form').addEventListener('submit', function(e) {
+    if (e.submitter && e.submitter.name === 'record_payment') {
+        const amount = document.getElementById('{{ form.amount.id_for_label }}').value.trim();
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+        
+        if (!amount || !paymentMethod) {
+            e.preventDefault();
+            alert('Please fill in all required fields (Amount and Payment Method).');
+            return false;
+        }
+        
+        // Confirm the payment details
+        const confirmation = confirm(`Confirm payment details:\nParent: {{ parent_profile.first_name }} {{ parent_profile.last_name }}\nAmount: $${amount}\nMethod: ${paymentMethod.value.toUpperCase()}\n\nProceed?`);
+        
+        if (!confirmation) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show loading state
+        e.submitter.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Recording...';
+        e.submitter.disabled = true;
+    }
+});
+{% endif %}
+
+// Basic QR Code Scanner (placeholder - would need full implementation with camera library)
+document.getElementById('start-camera')?.addEventListener('click', function() {
+    alert('QR Code camera scanning is not yet implemented. Please enter the QR code text manually in the search field above.');
 });
 </script>
 {% endblock %}

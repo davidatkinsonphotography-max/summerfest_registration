@@ -188,40 +188,88 @@ def payment_cancel(request):
 @user_passes_test(lambda user: user.is_staff or hasattr(user, 'teacherprofile'))
 def manual_payment(request):
     """Record manual payments (cash/eftpos) by staff"""
-    if request.method == 'POST':
-        form = ManualPaymentForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['parent_username']
-            amount = form.cleaned_data['amount']
-            payment_method = form.cleaned_data['payment_method']
-            notes = form.cleaned_data['notes']
-            
-            # Get parent and payment account
-            user = User.objects.get(username=username)
-            parent_profile = user.parentprofile
-            payment_account = get_or_create_payment_account(parent_profile)
-            
-            # Add funds
-            description = f"{payment_method.upper()} payment"
-            if notes:
-                description += f" - {notes}"
-            
-            payment_account.add_funds(amount, description)
-            
-            # Update transaction with staff details
-            transaction = payment_account.transactions.first()
-            transaction.payment_method = payment_method
-            transaction.recorded_by = request.user
-            transaction.save()
-            
-            messages.success(request, f'${amount} {payment_method} payment recorded for {parent_profile.first_name} {parent_profile.last_name}')
-            
-            # Clear form for next entry
-            form = ManualPaymentForm()
-    else:
-        form = ManualPaymentForm()
+    parent_profile = None
+    search_info = None
     
-    return render(request, 'registration/manual_payment.html', {'form': form})
+    # Check if we're coming from manual sign-in with parent info
+    from_sign_in_parent = request.GET.get('parent_username')
+    
+    if request.method == 'POST':
+        if 'lookup_parent' in request.POST:
+            # Parent lookup form
+            form = ManualPaymentForm(request.POST)
+            if form.is_valid():
+                parent_profile = form.get_parent_profile()
+                search_info = form.get_search_info()
+                # Keep form data for the template
+                form = ManualPaymentForm(initial={
+                    'search_type': form.cleaned_data.get('search_type', 'username'),
+                    'parent_search': form.cleaned_data.get('parent_search', '')
+                })
+        
+        elif 'record_payment' in request.POST:
+            # Payment recording form
+            form = ManualPaymentForm(request.POST)
+            if form.is_valid():
+                parent_profile = form.get_parent_profile()
+                if parent_profile:
+                    amount = form.cleaned_data['amount']
+                    payment_method = form.cleaned_data['payment_method']
+                    notes = form.cleaned_data['notes']
+                    
+                    # Get payment account
+                    payment_account = get_or_create_payment_account(parent_profile)
+                    
+                    # Add funds
+                    description = f"{payment_method.upper()} payment"
+                    if notes:
+                        description += f" - {notes}"
+                    
+                    payment_account.add_funds(amount, description)
+                    
+                    # Update transaction with staff details
+                    transaction = payment_account.transactions.first()
+                    transaction.payment_method = payment_method
+                    transaction.recorded_by = request.user
+                    transaction.save()
+                    
+                    messages.success(request, f'${amount} {payment_method} payment recorded for {parent_profile.first_name} {parent_profile.last_name}')
+                    
+                    # Clear form for next entry
+                    form = ManualPaymentForm()
+                    parent_profile = None
+                    search_info = None
+                else:
+                    messages.error(request, "Please find a parent first before recording payment.")
+    else:
+        # GET request - check if pre-populating from manual sign-in
+        initial_data = {}
+        if from_sign_in_parent:
+            initial_data['search_type'] = 'username'
+            initial_data['parent_search'] = from_sign_in_parent
+            
+            # Try to auto-populate parent info
+            try:
+                user = User.objects.get(username=from_sign_in_parent)
+                if hasattr(user, 'parentprofile'):
+                    parent_profile = user.parentprofile
+                    search_info = {
+                        'parent': parent_profile,
+                        'method': 'username',
+                        'found_by': f"Username: {parent_profile.user.username} (from manual sign-in)"
+                    }
+            except User.DoesNotExist:
+                messages.warning(request, f"Could not find parent with username '{from_sign_in_parent}'.")
+        
+        form = ManualPaymentForm(initial=initial_data)
+    
+    context = {
+        'form': form,
+        'parent_profile': parent_profile,
+        'search_info': search_info
+    }
+    
+    return render(request, 'registration/manual_payment.html', context)
 
 
 @login_required

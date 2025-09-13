@@ -131,8 +131,9 @@ class ParentRegistrationForm(UserCreationForm):
             cleaned_data['which_church'] = ''
         
         # Conditional validation for additional information
-        if how_heard == 'friend' and not additional_info:
-            raise ValidationError("Please tell us who recommended Summerfest in the additional information field.")
+        # Made non-mandatory as per user request - no longer raises ValidationError
+        # if how_heard == 'friend' and not additional_info:
+        #     raise ValidationError("Please tell us who recommended Summerfest in the additional information field.")
         
         return cleaned_data
 

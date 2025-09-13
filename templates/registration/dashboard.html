@@ -77,6 +77,79 @@
                     {% endif %}
                 </div>
             </div>
+            
+            <!-- QR Codes Section -->
+            {% if children %}
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-qr-code-scan"></i> All QR Codes</h4>
+                    <small>Save these to your phone for easy check-in</small>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for child in children %}
+                            <div class="col-md-6 col-lg-4 mb-4 text-center">
+                                <div class="card border">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title text-primary">{{ child.first_name }}</h6>
+                                        {% if child.qr_code_image %}
+                                            <img src="{{ child.qr_code_image.url }}" 
+                                                 alt="QR Code for {{ child.first_name }}" 
+                                                 class="img-fluid mb-2" 
+                                                 style="max-width: 120px; height: auto;">
+                                        {% else %}
+                                            <div class="bg-light p-3 mb-2" style="height: 120px; display: flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-qr-code" style="font-size: 2rem; color: #ccc;"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="small text-muted">
+                                            <strong>Manual ID:</strong><br>
+                                            <code class="small">summerfest_child_{{ child.qr_code_id }}</code>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="badge bg-secondary small">{{ child.get_child_class_display }}</span>
+                                        </div>
+                                        {% if child.has_dietary_needs or child.has_medical_needs %}
+                                        <div class="mt-1">
+                                            {% if child.has_dietary_needs %}
+                                                <span class="badge bg-warning text-dark" title="{{ child.dietary_needs_detail }}">
+                                                    <i class="bi bi-exclamation-triangle"></i> Diet
+                                                </span>
+                                            {% endif %}
+                                            {% if child.has_medical_needs %}
+                                                <span class="badge bg-danger" title="{{ child.medical_allergy_details }}">
+                                                    <i class="bi bi-heart-pulse"></i> Medical
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="alert alert-light mt-3">
+                        <h6><i class="bi bi-lightbulb"></i> QR Code Tips:</h6>
+                        <ul class="small mb-0">
+                            <li><strong>Save to Phone:</strong> Screenshot or save these QR codes to your photo gallery</li>
+                            <li><strong>Print Copies:</strong> Consider printing backup copies</li>
+                            <li><strong>Manual Backup:</strong> Staff can type the Manual ID if scanning fails</li>
+                            <li><strong>Share Family:</strong> Send copies to other family members who might do drop-off</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="#" onclick="window.print(); return false;" class="btn btn-outline-primary btn-sm me-2">
+                            <i class="bi bi-printer"></i> Print All QR Codes
+                        </a>
+                        <button onclick="downloadAllQRCodes()" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-download"></i> Download All
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
         
         <div class="col-md-4">
@@ -151,4 +224,58 @@
         </div>
     </div>
 </div>
+
+<style>
+@media print {
+    .card:not(.qr-code-card) {
+        display: none !important;
+    }
+    .qr-code-card {
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+    }
+    .btn, .alert {
+        display: none !important;
+    }
+    body {
+        font-size: 12pt;
+    }
+}
+</style>
+
+<script>
+function downloadAllQRCodes() {
+    // Create a temporary container for QR codes
+    const qrImages = document.querySelectorAll('img[alt*="QR Code"]');
+    
+    if (qrImages.length === 0) {
+        alert('No QR codes found to download.');
+        return;
+    }
+    
+    qrImages.forEach((img, index) => {
+        const childName = img.alt.replace('QR Code for ', '');
+        
+        // Create a temporary link to download the image
+        const link = document.createElement('a');
+        link.href = img.src;
+        link.download = `Summerfest_QR_${childName.replace(/\s+/g, '_')}.png`;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        
+        // Small delay between downloads to prevent browser blocking
+        setTimeout(() => {
+            link.click();
+            document.body.removeChild(link);
+        }, index * 100);
+    });
+    
+    // Show success message
+    setTimeout(() => {
+        alert(`Downloading ${qrImages.length} QR code(s). Check your downloads folder.`);
+    }, qrImages.length * 100 + 500);
+}
+</script>
+
 {% endblock %}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summerfest 2026 QR Code - {{ child.first_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #FFD23F;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #333;
+            margin: 0;
+        }
+        .child-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            margin-bottom: 20px;
+        }
+        .qr-info {
+            background-color: #e9f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 20px;
+        }
+        .important {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .footer {
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        .highlight {
+            background-color: #fff2cc;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+        .qr-code-info {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌞 Summerfest 2026</h1>
+        <p>QR Code for {{ child.first_name }} {{ child.last_name }}</p>
+    </div>
+
+    <p>Hi {{ parent_profile.first_name }},</p>
+
+    <p>Great news! {{ child.first_name }} has been successfully registered for Summerfest 2026. 🎉</p>
+
+    <div class="child-info">
+        <h3>📝 Child Registration Details</h3>
+        <p><strong>Name:</strong> {{ child.first_name }} {{ child.last_name }}</p>
+        <p><strong>Class:</strong> {{ child.get_child_class_display }}</p>
+        <p><strong>Date of Birth:</strong> {{ child.date_of_birth|date:"F j, Y" }}</p>
+        {% if child.has_dietary_needs %}
+        <p><strong>⚠️ Dietary Needs:</strong> {{ child.dietary_needs_detail }}</p>
+        {% endif %}
+        {% if child.has_medical_needs %}
+        <p><strong>🏥 Medical Needs:</strong> {{ child.medical_allergy_details }}</p>
+        {% endif %}
+    </div>
+
+    <div class="qr-info">
+        <h3>📱 QR Code Information</h3>
+        <p>{{ child.first_name }}'s QR code is attached to this email. Here are some important details:</p>
+        
+        <div class="qr-code-info">
+            <p><strong>Manual Code ID:</strong> <span class="highlight">{{ qr_code_data }}</span></p>
+            <p><em>This code can be typed manually if the QR code won't scan</em></p>
+        </div>
+        
+        <p><strong>💡 How to use the QR code:</strong></p>
+        <ul>
+            <li>Save the QR code image to your phone's photos</li>
+            <li>Show it to registration staff when you arrive at Summerfest</li>
+            <li>They'll scan it to check {{ child.first_name }} in instantly!</li>
+            <li>No need to remember usernames or fill out forms</li>
+        </ul>
+    </div>
+
+    <div class="important">
+        <h4>🎯 Important Tips for Summerfest Day</h4>
+        <ul>
+            <li><strong>Save to Phone:</strong> Save the QR code image to your phone's photo gallery</li>
+            <li><strong>Print Backup:</strong> Consider printing a copy as backup</li>
+            <li><strong>Multiple Devices:</strong> Share the image with other family members</li>
+            <li><strong>Manual Code:</strong> If scanning fails, staff can type: <code>{{ qr_code_data }}</code></li>
+            <li><strong>Payment:</strong> Check your account balance before arrival</li>
+        </ul>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="#" class="btn">View Dashboard Online</a>
+        <a href="#" class="btn" style="background-color: #28a745;">Payment Account</a>
+    </div>
+
+    <h4>🎉 What's Next?</h4>
+    <ol>
+        <li><strong>Save the QR Code:</strong> Save the attached QR code image to your phone</li>
+        <li><strong>Check Payment Balance:</strong> Make sure your account has sufficient funds</li>
+        <li><strong>Arrive Early:</strong> Come a few minutes early for smooth check-in</li>
+        <li><strong>Have Fun:</strong> {{ child.first_name }} is going to have an amazing time!</li>
+    </ol>
+
+    <div class="footer">
+        <p><strong>Summerfest 2026</strong><br>
+        Lighthouse Church<br>
+        Questions? Contact us at summerfest@example.com</p>
+        
+        <p style="font-size: 12px; margin-top: 15px;">
+            This QR code is unique to {{ child.first_name }} {{ child.last_name }}. 
+            Please keep it safe and don't share it with other families.
+        </p>
+    </div>
+</body>
+</html>

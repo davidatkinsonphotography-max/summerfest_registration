@@ -174,7 +174,7 @@ class Command(BaseCommand):
             postcode=row.get('postcode', '').strip(),
             email=row['parent_email'].strip(),
             phone_number=row.get('phone_number', '').strip(),
-            how_heard_about=row.get('how_heard_about', 'other').strip(),
+            how_heard_about=row.get('how_heard_about', 'friend').strip(),
             additional_information=row.get('additional_information', '').strip(),
             attends_church_regularly=self.parse_boolean(row.get('attends_church_regularly', 'False')),
             which_church=row.get('which_church', '').strip(),

@@ -335,8 +335,8 @@
                                 <i class="bi bi-envelope"></i> Email {{ interaction.parent_profile.user.first_name }}
                             </a>
                         {% endif %}
-                        <a href="{% url 'parent_detail' interaction.parent_profile.id %}" class="btn btn-outline-info">
-                            <i class="bi bi-person-lines-fill"></i> View Parent Profile
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-info">
+                            <i class="bi bi-person-lines-fill"></i> View Parent Dashboard
                         </a>
                     {% else %}
                         {% if interaction.manual_phone %}

@@ -62,6 +62,13 @@
                                 </a>
                             </li>
                         {% endif %}
+                        {% if user.is_staff or user.welcomerprofile %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'welcomer_dashboard' %}">
+                                    <i class="bi bi-chat-heart"></i> Parent Connections
+                                </a>
+                            </li>
+                        {% endif %}
                         {% if user.is_staff %}
                             <li class="nav-item">
                                 <a class="nav-link" href="/admin/">

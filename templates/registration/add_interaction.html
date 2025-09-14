@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+
+{% block title %}Record New Conversation - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0"><i class="bi bi-plus-circle"></i> Record New Conversation</h3>
+                    <p class="mb-0 mt-2">Track your conversation with a parent or visitor</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="interaction-form">
+                        {% csrf_token %}
+                        
+                        <!-- Person Search Section -->
+                        <div class="card border-primary mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="bi bi-search"></i> Step 1: Find This Person</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Search Method Radio Buttons -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">{{ form.search_method.label }}</label>
+                                    <div class="row">
+                                        {% for choice in form.search_method %}
+                                            <div class="col-md-4 mb-2">
+                                                <div class="form-check">
+                                                    {{ choice.tag }}
+                                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                        {% if choice.choice_value == 'parent_search' %}
+                                                            <i class="bi bi-person"></i> {{ choice.choice_label }}
+                                                        {% elif choice.choice_value == 'child_search' %}
+                                                            <i class="bi bi-people"></i> {{ choice.choice_label }}
+                                                        {% else %}
+                                                            <i class="bi bi-person-plus"></i> {{ choice.choice_label }}
+                                                        {% endif %}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if form.search_method.errors %}
+                                        <div class="text-danger small">{{ form.search_method.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Parent Search -->
+                                <div id="parent-search-section" class="search-section" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="{{ form.parent_profile.id_for_label }}" class="form-label">{{ form.parent_profile.label }}</label>
+                                        {{ form.parent_profile }}
+                                        {% if form.parent_profile.errors %}
+                                            <div class="text-danger small">{{ form.parent_profile.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Child Search -->
+                                <div id="child-search-section" class="search-section" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="{{ form.child_for_parent_lookup.id_for_label }}" class="form-label">{{ form.child_for_parent_lookup.label }}</label>
+                                        {{ form.child_for_parent_lookup }}
+                                        {% if form.child_for_parent_lookup.errors %}
+                                            <div class="text-danger small">{{ form.child_for_parent_lookup.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Manual Entry -->
+                                <div id="manual-entry-section" class="search-section" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.manual_first_name.id_for_label }}" class="form-label">{{ form.manual_first_name.label }} *</label>
+                                            {{ form.manual_first_name }}
+                                            {% if form.manual_first_name.errors %}
+                                                <div class="text-danger small">{{ form.manual_first_name.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.manual_last_name.id_for_label }}" class="form-label">{{ form.manual_last_name.label }}</label>
+                                            {{ form.manual_last_name }}
+                                            {% if form.manual_last_name.errors %}
+                                                <div class="text-danger small">{{ form.manual_last_name.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.manual_phone.id_for_label }}" class="form-label">{{ form.manual_phone.label }}</label>
+                                            {{ form.manual_phone }}
+                                            {% if form.manual_phone.errors %}
+                                                <div class="text-danger small">{{ form.manual_phone.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.manual_email.id_for_label }}" class="form-label">{{ form.manual_email.label }}</label>
+                                            {{ form.manual_email }}
+                                            {% if form.manual_email.errors %}
+                                                <div class="text-danger small">{{ form.manual_email.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.manual_address.id_for_label }}" class="form-label">{{ form.manual_address.label }}</label>
+                                        {{ form.manual_address }}
+                                        {% if form.manual_address.errors %}
+                                            <div class="text-danger small">{{ form.manual_address.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.manual_children_info.id_for_label }}" class="form-label">{{ form.manual_children_info.label }}</label>
+                                        {{ form.manual_children_info }}
+                                        <div class="form-text">e.g., "Sarah (Minis), Tom (Nitro)"</div>
+                                        {% if form.manual_children_info.errors %}
+                                            <div class="text-danger small">{{ form.manual_children_info.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Person Info Display -->
+                                <div id="person-info-display" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <h6><i class="bi bi-info-circle"></i> Person Information:</h6>
+                                        <div id="person-details"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Details Section -->
+                        <div class="card border-warning mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Step 2: Conversation Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Interaction Day -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">{{ form.interaction_day.label }}</label>
+                                    <div class="row">
+                                        {% for choice in form.interaction_day %}
+                                            <div class="col-md-2 col-sm-4 col-6 mb-2">
+                                                <div class="form-check">
+                                                    {{ choice.tag }}
+                                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                        {{ choice.choice_label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if form.interaction_day.errors %}
+                                        <div class="text-danger small">{{ form.interaction_day.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Church Attendance -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">{{ form.attends_church.label }}</label>
+                                    <div class="row">
+                                        {% for choice in form.attends_church %}
+                                            <div class="col-md-4 mb-2">
+                                                <div class="form-check">
+                                                    {{ choice.tag }}
+                                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                        {{ choice.choice_label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if form.attends_church.errors %}
+                                        <div class="text-danger small">{{ form.attends_church.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Current Church (conditional) -->
+                                <div id="current-church-section" class="mb-4" style="display: none;">
+                                    <label for="{{ form.current_church.id_for_label }}" class="form-label">{{ form.current_church.label }}</label>
+                                    {{ form.current_church }}
+                                    {% if form.current_church.errors %}
+                                        <div class="text-danger small">{{ form.current_church.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Questions -->
+                        <div class="card border-info mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="bi bi-question-circle"></i> Step 3: Conversation Questions</h5>
+                                <small class="mt-1">All fields are optional - record what was discussed</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <label for="{{ form.faith_status.id_for_label }}" class="form-label">{{ form.faith_status.label }}</label>
+                                    {{ form.faith_status }}
+                                    <div class="form-text">Open-ended question about their current faith journey</div>
+                                    {% if form.faith_status.errors %}
+                                        <div class="text-danger small">{{ form.faith_status.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.knows_lighthouse_members.id_for_label }}" class="form-label">{{ form.knows_lighthouse_members.label }}</label>
+                                    {{ form.knows_lighthouse_members }}
+                                    <div class="form-text">Names of any Lighthouse Church members they know</div>
+                                    {% if form.knows_lighthouse_members.errors %}
+                                        <div class="text-danger small">{{ form.knows_lighthouse_members.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.previous_lighthouse_interaction.id_for_label }}" class="form-label">{{ form.previous_lighthouse_interaction.label }}</label>
+                                    {{ form.previous_lighthouse_interaction }}
+                                    <div class="form-text">Any previous interactions with Lighthouse Church members or events</div>
+                                    {% if form.previous_lighthouse_interaction.errors %}
+                                        <div class="text-danger small">{{ form.previous_lighthouse_interaction.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.interested_in_future_events.id_for_label }}" class="form-label">{{ form.interested_in_future_events.label }}</label>
+                                    {{ form.interested_in_future_events }}
+                                    <div class="form-text">Interest in Meet Jesus, church services, community activities, etc.</div>
+                                    {% if form.interested_in_future_events.errors %}
+                                        <div class="text-danger small">{{ form.interested_in_future_events.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.additional_notes.id_for_label }}" class="form-label">{{ form.additional_notes.label }}</label>
+                                    {{ form.additional_notes }}
+                                    <div class="form-text">Any additional observations, prayer requests, or follow-up notes</div>
+                                    {% if form.additional_notes.errors %}
+                                        <div class="text-danger small">{{ form.additional_notes.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'welcomer_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Record Conversation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchMethodRadios = document.querySelectorAll('input[name="search_method"]');
+    const churchRadios = document.querySelectorAll('input[name="attends_church"]');
+    
+    // Handle search method changes
+    searchMethodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            showSearchSection(this.value);
+        });
+    });
+    
+    // Handle church attendance changes
+    churchRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            toggleChurchSection(this.value);
+        });
+    });
+    
+    // Parent dropdown change
+    const parentSelect = document.getElementById('id_parent_profile');
+    if (parentSelect) {
+        parentSelect.addEventListener('change', function() {
+            if (this.value) {
+                fetchParentInfo(this.value);
+            } else {
+                hidePersonInfo();
+            }
+        });
+    }
+    
+    // Child dropdown change
+    const childSelect = document.getElementById('id_child_for_parent_lookup');
+    if (childSelect) {
+        childSelect.addEventListener('change', function() {
+            if (this.value) {
+                fetchChildParentInfo(this.value);
+            } else {
+                hidePersonInfo();
+            }
+        });
+    }
+    
+    // Initialize based on current selection
+    const selectedSearchMethod = document.querySelector('input[name="search_method"]:checked');
+    if (selectedSearchMethod) {
+        showSearchSection(selectedSearchMethod.value);
+    }
+    
+    const selectedChurch = document.querySelector('input[name="attends_church"]:checked');
+    if (selectedChurch) {
+        toggleChurchSection(selectedChurch.value);
+    }
+});
+
+function showSearchSection(method) {
+    // Hide all sections
+    document.querySelectorAll('.search-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    hidePersonInfo();
+    
+    // Show selected section
+    if (method === 'parent_search') {
+        document.getElementById('parent-search-section').style.display = 'block';
+    } else if (method === 'child_search') {
+        document.getElementById('child-search-section').style.display = 'block';
+    } else if (method === 'no_record') {
+        document.getElementById('manual-entry-section').style.display = 'block';
+    }
+}
+
+function toggleChurchSection(value) {
+    const churchSection = document.getElementById('current-church-section');
+    if (value === 'True') {
+        churchSection.style.display = 'block';
+    } else {
+        churchSection.style.display = 'none';
+        document.getElementById('id_current_church').value = '';
+    }
+}
+
+function fetchParentInfo(parentId) {
+    fetch(`{% url 'get_parent_info' %}?parent_id=${parentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error:', data.error);
+                return;
+            }
+            displayPersonInfo(data);
+        })
+        .catch(error => {
+            console.error('Error fetching parent info:', error);
+        });
+}
+
+function fetchChildParentInfo(childId) {
+    fetch(`{% url 'get_child_parent_info' %}?child_id=${childId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error:', data.error);
+                return;
+            }
+            displayPersonInfo(data, data.selected_child);
+        })
+        .catch(error => {
+            console.error('Error fetching child parent info:', error);
+        });
+}
+
+function displayPersonInfo(data, selectedChild = null) {
+    const detailsDiv = document.getElementById('person-details');
+    let html = `
+        <strong>${data.name}</strong><br>
+        <i class="bi bi-telephone"></i> ${data.phone}<br>
+        <i class="bi bi-envelope"></i> ${data.email}<br>
+        <i class="bi bi-geo-alt"></i> ${data.address}<br>
+    `;
+    
+    if (data.children && data.children.length > 0) {
+        html += `<i class="bi bi-people"></i> <strong>Children:</strong><br>`;
+        data.children.forEach(child => {
+            const highlight = selectedChild && child.name === selectedChild ? ' style="background-color: yellow;"' : '';
+            html += `<small${highlight}>&nbsp;&nbsp;&nbsp;&nbsp;${child.name} (${child.class})</small><br>`;
+        });
+    }
+    
+    detailsDiv.innerHTML = html;
+    document.getElementById('person-info-display').style.display = 'block';
+}
+
+function hidePersonInfo() {
+    document.getElementById('person-info-display').style.display = 'none';
+}
+</script>
+{% endblock %}

@@ -309,7 +309,7 @@
     </div>
     
     <!-- Daily Income Report -->
-    {% if daily_income.daily_totals %}
+    {% if daily_income %}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -331,17 +331,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for date, totals in daily_income.daily_totals.items %}
+                                {% for date, data in daily_income.items %}
                                 <tr>
                                     <td>{{ date }}</td>
-                                    {% with methods=daily_income.by_method|get_item:date %}
-                                    <td>${{ methods.Credit Card.amount|default:"0.00" }}</td>
-                                    <td>${{ methods.Cash.amount|default:"0.00" }}</td>
-                                    <td>${{ methods.EFTPOS.amount|default:"0.00" }}</td>
-                                    <td>${{ methods.Bank Transfer.amount|default:"0.00" }}</td>
-                                    <td>${{ methods.Other.amount|default:"0.00" }}</td>
-                                    {% endwith %}
-                                    <td><strong>${{ totals.amount }}</strong></td>
+                                    <td>${{ data.Credit Card }}</td>
+                                    <td>${{ data.Cash }}</td>
+                                    <td>${{ data.EFTPOS }}</td>
+                                    <td>${{ data.Bank Transfer }}</td>
+                                    <td>${{ data.Other }}</td>
+                                    <td><strong>${{ data.total }}</strong></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

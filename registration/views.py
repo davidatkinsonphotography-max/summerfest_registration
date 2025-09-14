@@ -624,7 +624,7 @@ def manual_sign_in(request):
                         })
                     children = children_with_attendance
                 # Keep form data for the template
-                form = ManualSignInForm(initial={'search_query': form.cleaned_data['search_query']})
+                form = ManualSignInForm(initial={'parent_username': form.cleaned_data['parent_username']})
             else:
                 # Form is invalid for lookup
                 form = ManualSignInForm(request.POST)
@@ -635,11 +635,11 @@ def manual_sign_in(request):
         elif 'sign_in' in request.POST:
             # Child sign-in processing
             child_ids = request.POST.getlist('child_ids')
-            search_query = request.POST.get('search_query')
+            parent_username = request.POST.get('parent_username')
             
-            if child_ids and search_query:
-                # Re-lookup parent using search query
-                temp_form = ManualSignInForm({'search_query': search_query})
+            if child_ids and parent_username:
+                # Re-lookup parent using username
+                temp_form = ManualSignInForm({'parent_username': parent_username})
                 if temp_form.is_valid():
                     parent_profile, _ = temp_form.get_parent_and_children()
                     search_info = temp_form.get_search_info()
@@ -721,7 +721,7 @@ def manual_sign_in(request):
                                 'is_checked_in': today_attendance is not None
                             })
                         children = children_with_attendance
-                        form = ManualSignInForm(initial={'search_query': search_query})
+                        form = ManualSignInForm(initial={'parent_username': parent_username})
                 else:
                     messages.error(request, "Invalid search query.")
                     form = ManualSignInForm()

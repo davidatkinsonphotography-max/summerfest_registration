@@ -203,8 +203,7 @@ def manual_payment(request):
                 search_info = form.get_search_info()
                 # Keep form data for the template
                 form = ManualPaymentForm(initial={
-                    'search_type': form.cleaned_data.get('search_type', 'username'),
-                    'parent_search': form.cleaned_data.get('parent_search', '')
+                    'parent_username': form.cleaned_data.get('parent_username', '')
                 })
             else:
                 # Form is invalid, reset everything
@@ -260,8 +259,7 @@ def manual_payment(request):
         # GET request - check if pre-populating from manual sign-in
         initial_data = {}
         if from_sign_in_parent:
-            initial_data['search_type'] = 'username'
-            initial_data['parent_search'] = from_sign_in_parent
+            initial_data['parent_username'] = from_sign_in_parent
             
             # Try to auto-populate parent info
             try:

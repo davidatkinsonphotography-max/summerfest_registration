@@ -160,7 +160,7 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Creche</th>
-                                    <th>Little Tackers</th>
+                                    <th>Tackers</th>
                                     <th>Minis</th>
                                     <th>Nitro</th>
                                     <th>56ers</th>
@@ -171,12 +171,12 @@
                                 {% for date, classes in children_by_class_day.items %}
                                 <tr>
                                     <td>{{ date }}</td>
-                                    <td>{{ classes.Creche|default:0 }}</td>
-                                    <td>{{ classes.Little Tackers|default:0 }}</td>
-                                    <td>{{ classes.Minis|default:0 }}</td>
-                                    <td>{{ classes.Nitro|default:0 }}</td>
+                                    <td>{{ classes.creche|default:0 }}</td>
+                                    <td>{{ classes.tackers|default:0 }}</td>
+                                    <td>{{ classes.minis|default:0 }}</td>
+                                    <td>{{ classes.nitro|default:0 }}</td>
                                     <td>{{ classes.56ers|default:0 }}</td>
-                                    <td><strong>{{ classes.Creche|default:0|add:classes.Little Tackers|default:0|add:classes.Minis|default:0|add:classes.Nitro|default:0|add:classes.56ers|default:0 }}</strong></td>
+                                    <td><strong>{{ classes.total }}</strong></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -203,7 +203,7 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Creche</th>
-                                    <th>Little Tackers</th>
+                                    <th>Tackers</th>
                                     <th>Minis</th>
                                     <th>Nitro</th>
                                     <th>56ers</th>
@@ -214,12 +214,12 @@
                                 {% for date, classes in attendance_by_class_day.items %}
                                 <tr>
                                     <td>{{ date }}</td>
-                                    <td>{{ classes.Creche|default:0 }}</td>
-                                    <td>{{ classes.Little Tackers|default:0 }}</td>
-                                    <td>{{ classes.Minis|default:0 }}</td>
-                                    <td>{{ classes.Nitro|default:0 }}</td>
+                                    <td>{{ classes.creche|default:0 }}</td>
+                                    <td>{{ classes.tackers|default:0 }}</td>
+                                    <td>{{ classes.minis|default:0 }}</td>
+                                    <td>{{ classes.nitro|default:0 }}</td>
                                     <td>{{ classes.56ers|default:0 }}</td>
-                                    <td><strong>{{ classes.Creche|default:0|add:classes.Little Tackers|default:0|add:classes.Minis|default:0|add:classes.Nitro|default:0|add:classes.56ers|default:0 }}</strong></td>
+                                    <td><strong>{{ classes.total }}</strong></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

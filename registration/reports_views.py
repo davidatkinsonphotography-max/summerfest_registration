@@ -87,14 +87,17 @@ def get_children_registered_by_class_day(start_date, end_date):
         count=Count('id')
     ).order_by('created_at__date', 'child_class')
     
-    # Organize by date then class
-    result = defaultdict(lambda: defaultdict(int))
-    class_choices = dict(Child.CLASS_CHOICES)
+    # Organize by date then class (using class codes as keys)
+    result = defaultdict(lambda: {
+        'creche': 0, 'tackers': 0, 'minis': 0, 'nitro': 0, '56ers': 0, 'total': 0
+    })
     
     for item in children:
         date_str = item['created_at__date'].strftime('%Y-%m-%d')
-        class_display = class_choices.get(item['child_class'], item['child_class'])
-        result[date_str][class_display] = item['count']
+        class_code = item['child_class']  # Use the actual code (creche, tackers, etc.)
+        count = item['count']
+        result[date_str][class_code] = count
+        result[date_str]['total'] += count
     
     return dict(result)
 
@@ -109,14 +112,17 @@ def get_attendance_by_class_day(start_date, end_date):
         count=Count('id')
     ).order_by('date', 'child__child_class')
     
-    # Organize by date then class
-    result = defaultdict(lambda: defaultdict(int))
-    class_choices = dict(Child.CLASS_CHOICES)
+    # Organize by date then class (using class codes as keys)
+    result = defaultdict(lambda: {
+        'creche': 0, 'tackers': 0, 'minis': 0, 'nitro': 0, '56ers': 0, 'total': 0
+    })
     
     for item in attendance:
         date_str = item['date'].strftime('%Y-%m-%d')
-        class_display = class_choices.get(item['child__child_class'], item['child__child_class'])
-        result[date_str][class_display] = item['count']
+        class_code = item['child__child_class']  # Use the actual code (creche, tackers, etc.)
+        count = item['count']
+        result[date_str][class_code] = count
+        result[date_str]['total'] += count
     
     return dict(result)
 

@@ -206,6 +206,11 @@ def manual_payment(request):
                     'search_type': form.cleaned_data.get('search_type', 'username'),
                     'parent_search': form.cleaned_data.get('parent_search', '')
                 })
+            else:
+                # Form is invalid, reset everything
+                form = ManualPaymentForm(request.POST)
+                parent_profile = None
+                search_info = None
         
         elif 'record_payment' in request.POST:
             # Payment recording form
@@ -241,6 +246,16 @@ def manual_payment(request):
                     search_info = None
                 else:
                     messages.error(request, "Please find a parent first before recording payment.")
+            else:
+                # Form is invalid for recording payment
+                form = ManualPaymentForm(request.POST)
+                parent_profile = None
+                search_info = None
+        else:
+            # Unknown POST action
+            form = ManualPaymentForm()
+            parent_profile = None
+            search_info = None
     else:
         # GET request - check if pre-populating from manual sign-in
         initial_data = {}

@@ -227,14 +227,22 @@ def get_daily_income(start_date, end_date):
         transaction_count=Count('id')
     ).order_by('created_at__date', 'payment_method')
     
-    # Organize by date with all payment methods
+    # Create a mapping from display names to template-safe keys
+    method_key_mapping = {
+        'Credit Card': 'credit_card',
+        'Cash': 'cash',
+        'EFTPOS': 'eftpos',
+        'Bank Transfer': 'bank_transfer',
+        'Other': 'other'
+    }
+    
+    # Organize by date with all payment methods (using template-safe keys)
     result = defaultdict(lambda: {
-        'date': '',
-        'Credit Card': Decimal('0.00'),
-        'Cash': Decimal('0.00'), 
-        'EFTPOS': Decimal('0.00'),
-        'Bank Transfer': Decimal('0.00'),
-        'Other': Decimal('0.00'),
+        'credit_card': Decimal('0.00'),
+        'cash': Decimal('0.00'), 
+        'eftpos': Decimal('0.00'),
+        'bank_transfer': Decimal('0.00'),
+        'other': Decimal('0.00'),
         'total': Decimal('0.00')
     })
     
@@ -243,11 +251,9 @@ def get_daily_income(start_date, end_date):
         method = item['payment_method'] or 'Other'
         amount = item['total_amount'] or Decimal('0.00')
         
-        result[date_str]['date'] = date_str
-        if method in result[date_str]:
-            result[date_str][method] = amount
-        else:
-            result[date_str]['Other'] += amount
+        # Convert method to template-safe key
+        method_key = method_key_mapping.get(method, 'other')
+        result[date_str][method_key] = amount
         result[date_str]['total'] += amount
     
     return dict(result)

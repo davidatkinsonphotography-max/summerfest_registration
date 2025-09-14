@@ -7,6 +7,10 @@ from .payment_views import (
 )
 from .export_views_fixed import export_dashboard, export_all_data_csv, export_attendance_detailed_csv, export_payments_detailed_csv
 from .pass_views import purchase_pass, pass_purchase_success, pass_purchase_cancel, my_passes
+from .welcomer_views import (
+    welcomer_dashboard, add_interaction, interaction_list, interaction_detail,
+    edit_interaction, get_parent_info, get_child_parent_info
+)
 from django.http import HttpResponse
 
 def home(request):
@@ -70,6 +74,15 @@ urlpatterns = [
     path('passes/success/', pass_purchase_success, name='pass_purchase_success'),
     path('passes/cancel/', pass_purchase_cancel, name='pass_purchase_cancel'),
     path('passes/', my_passes, name='my_passes'),
+    
+    # Welcomer system
+    path('welcomer/', welcomer_dashboard, name='welcomer_dashboard'),
+    path('welcomer/add/', add_interaction, name='add_interaction'),
+    path('welcomer/list/', interaction_list, name='interaction_list'),
+    path('welcomer/interaction/<int:interaction_id>/', interaction_detail, name='interaction_detail'),
+    path('welcomer/interaction/<int:interaction_id>/edit/', edit_interaction, name='edit_interaction'),
+    path('welcomer/api/parent-info/', get_parent_info, name='get_parent_info'),
+    path('welcomer/api/child-parent-info/', get_child_parent_info, name='get_child_parent_info'),
 ]
 
 

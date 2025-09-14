@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from .models import ParentProfile, Child
+from .models import ParentProfile, Child, ParentInteraction
 from .widgets import ThreeFieldDateField
 from datetime import date
 from decimal import Decimal
@@ -457,6 +457,158 @@ class ManualSignInForm(forms.Form):
                 'found_by': f"Selected from dropdown: {self._found_parent.last_name}, {self._found_parent.first_name}"
             }
         return None
+
+
+# Welcomer System Forms
+
+class ParentInteractionForm(forms.ModelForm):
+    """Form for recording parent interactions by welcomers"""
+    
+    SEARCH_METHOD_CHOICES = [
+        ('', 'Choose how to find this person...'),
+        ('parent_search', 'Search by Parent Name'),
+        ('child_search', 'Search by Child Name'),
+        ('no_record', 'No Record Found - Manual Entry'),
+    ]
+    
+    search_method = forms.ChoiceField(
+        choices=SEARCH_METHOD_CHOICES,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        label="How would you like to find this person?"
+    )
+    
+    # Dynamic parent and child dropdowns (populated in __init__)
+    parent_profile = forms.ModelChoiceField(
+        queryset=ParentProfile.objects.none(),
+        required=False,
+        empty_label="--- Select a Parent ---",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Select Parent"
+    )
+    
+    child_for_parent_lookup = forms.ModelChoiceField(
+        queryset=Child.objects.none(),
+        required=False,
+        empty_label="--- Select a Child ---",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Select Child"
+    )
+    
+    # Church attendance with conditional field
+    attends_church = forms.ChoiceField(
+        choices=[(None, '--- Not Asked ---'), (True, 'Yes'), (False, 'No')],
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        label="Do they currently attend a church?"
+    )
+    
+    class Meta:
+        model = ParentInteraction
+        fields = [
+            'search_method', 'parent_profile', 'child_for_parent_lookup',
+            'manual_first_name', 'manual_last_name', 'manual_phone', 'manual_email', 
+            'manual_address', 'manual_children_info',
+            'interaction_day', 'attends_church', 'current_church', 'faith_status',
+            'knows_lighthouse_members', 'previous_lighthouse_interaction',
+            'interested_in_future_events', 'additional_notes'
+        ]
+        widgets = {
+            'interaction_day': forms.RadioSelect(attrs={'class': 'form-check-input'}),
+            'manual_first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'manual_last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'manual_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'manual_email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'manual_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'manual_children_info': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'current_church': forms.TextInput(attrs={'class': 'form-control'}),
+            'faith_status': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'knows_lighthouse_members': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'previous_lighthouse_interaction': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'interested_in_future_events': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'additional_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        labels = {
+            'manual_first_name': 'First Name',
+            'manual_last_name': 'Last Name',
+            'manual_phone': 'Phone Number',
+            'manual_email': 'Email Address',
+            'manual_address': 'Address',
+            'manual_children_info': 'Children Attending & Classes',
+            'interaction_day': 'Which day did this conversation take place?',
+            'current_church': 'Which church do they attend?',
+            'faith_status': 'Current faith status',
+            'knows_lighthouse_members': 'Do they know anyone from Lighthouse Church?',
+            'previous_lighthouse_interaction': 'Have they interacted with Lighthouse Church before?',
+            'interested_in_future_events': 'Interest in future events (Meet Jesus, services, community activities)',
+            'additional_notes': 'Additional notes or observations',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Populate parent dropdown (sorted by last name)
+        self.fields['parent_profile'].queryset = ParentProfile.objects.select_related('user').order_by('last_name', 'first_name')
+        
+        # Populate child dropdown with child name and class
+        children = Child.objects.select_related('parent').order_by('first_name', 'last_name')
+        child_choices = [('', '--- Select a Child ---')]
+        for child in children:
+            display_name = f"{child.first_name} {child.last_name} ({child.get_class_short_name()})"
+            child_choices.append((child.id, display_name))
+        
+        self.fields['child_for_parent_lookup'].choices = child_choices
+        
+        # Set initial values for search method radio buttons
+        if not self.instance.pk:
+            self.fields['search_method'].initial = 'parent_search'
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        search_method = cleaned_data.get('search_method')
+        parent_profile = cleaned_data.get('parent_profile')
+        child_for_parent_lookup = cleaned_data.get('child_for_parent_lookup')
+        
+        # Validation based on search method
+        if search_method == 'parent_search':
+            if not parent_profile:
+                raise ValidationError("Please select a parent when using parent search.")
+            # Clear manual fields
+            for field in ['manual_first_name', 'manual_last_name', 'manual_phone', 
+                         'manual_email', 'manual_address', 'manual_children_info']:
+                cleaned_data[field] = ''
+                
+        elif search_method == 'child_search':
+            if not child_for_parent_lookup:
+                raise ValidationError("Please select a child when using child search.")
+            # Set parent_profile based on selected child
+            if child_for_parent_lookup:
+                try:
+                    child = Child.objects.get(id=child_for_parent_lookup)
+                    cleaned_data['parent_profile'] = child.parent
+                except Child.DoesNotExist:
+                    raise ValidationError("Selected child not found.")
+            # Clear manual fields
+            for field in ['manual_first_name', 'manual_last_name', 'manual_phone', 
+                         'manual_email', 'manual_address', 'manual_children_info']:
+                cleaned_data[field] = ''
+                
+        elif search_method == 'no_record':
+            # Clear linked parent
+            cleaned_data['parent_profile'] = None
+            # At least first name should be provided for manual entry
+            if not cleaned_data.get('manual_first_name'):
+                raise ValidationError("Please provide at least a first name for manual entries.")
+        
+        # Church attendance validation
+        attends_church = cleaned_data.get('attends_church')
+        current_church = cleaned_data.get('current_church')
+        
+        if attends_church == 'True' and not current_church:
+            raise ValidationError("Please specify which church they attend.")
+        elif attends_church == 'False':
+            cleaned_data['current_church'] = ''  # Clear church name if they don't attend
+        
+        return cleaned_data
 
 
 class PasswordResetRequestForm(forms.Form):

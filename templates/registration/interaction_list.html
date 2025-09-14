@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+
+{% block title %}Parent Conversations - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-chat-dots"></i> Parent Conversations</h2>
+            <p class="text-muted mb-0">Track and review conversations with parents and visitors</p>
+        </div>
+        <div>
+            <a href="{% url 'add_interaction' %}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Record New Conversation
+            </a>
+        </div>
+    </div>
+    
+    <!-- Search and Filter Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Search & Filter</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search Name/Phone</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ request.GET.search }}" placeholder="Enter name or phone number">
+                </div>
+                <div class="col-md-3">
+                    <label for="day_filter" class="form-label">Day</label>
+                    <select class="form-select" id="day_filter" name="day">
+                        <option value="">All Days</option>
+                        <option value="Monday" {% if request.GET.day == 'Monday' %}selected{% endif %}>Monday</option>
+                        <option value="Tuesday" {% if request.GET.day == 'Tuesday' %}selected{% endif %}>Tuesday</option>
+                        <option value="Wednesday" {% if request.GET.day == 'Wednesday' %}selected{% endif %}>Wednesday</option>
+                        <option value="Thursday" {% if request.GET.day == 'Thursday' %}selected{% endif %}>Thursday</option>
+                        <option value="Friday" {% if request.GET.day == 'Friday' %}selected{% endif %}>Friday</option>
+                        <option value="Saturday" {% if request.GET.day == 'Saturday' %}selected{% endif %}>Saturday</option>
+                        <option value="Sunday" {% if request.GET.day == 'Sunday' %}selected{% endif %}>Sunday</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="church_filter" class="form-label">Church Attendance</label>
+                    <select class="form-select" id="church_filter" name="church">
+                        <option value="">All</option>
+                        <option value="True" {% if request.GET.church == 'True' %}selected{% endif %}>Attends Church</option>
+                        <option value="False" {% if request.GET.church == 'False' %}selected{% endif %}>Doesn't Attend</option>
+                        <option value="Unknown" {% if request.GET.church == 'Unknown' %}selected{% endif %}>Unknown</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        {% if request.GET.search or request.GET.day or request.GET.church %}
+                            <a href="{% url 'interaction_list' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Results Summary -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <span class="text-muted">
+                Showing {{ interactions.start_index }}-{{ interactions.end_index }} of {{ interactions.paginator.count }} conversations
+                {% if request.GET.search or request.GET.day or request.GET.church %}
+                    (filtered)
+                {% endif %}
+            </span>
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-sort-down"></i> Sort by
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item {% if not request.GET.sort or request.GET.sort == '-created_at' %}active{% endif %}" 
+                       href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.day %}day={{ request.GET.day }}&{% endif %}{% if request.GET.church %}church={{ request.GET.church }}&{% endif %}sort=-created_at">Newest First</a></li>
+                <li><a class="dropdown-item {% if request.GET.sort == 'created_at' %}active{% endif %}" 
+                       href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.day %}day={{ request.GET.day }}&{% endif %}{% if request.GET.church %}church={{ request.GET.church }}&{% endif %}sort=created_at">Oldest First</a></li>
+                <li><a class="dropdown-item {% if request.GET.sort == 'parent_name' %}active{% endif %}" 
+                       href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.day %}day={{ request.GET.day }}&{% endif %}{% if request.GET.church %}church={{ request.GET.church }}&{% endif %}sort=parent_name">Name A-Z</a></li>
+                <li><a class="dropdown-item {% if request.GET.sort == '-parent_name' %}active{% endif %}" 
+                       href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.day %}day={{ request.GET.day }}&{% endif %}{% if request.GET.church %}church={{ request.GET.church }}&{% endif %}sort=-parent_name">Name Z-A</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Interactions List -->
+    {% if interactions %}
+        <div class="row">
+            {% for interaction in interactions %}
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-1">
+                                    <i class="bi bi-person-circle"></i> 
+                                    {% if interaction.parent_profile %}
+                                        {{ interaction.parent_profile.user.first_name }} {{ interaction.parent_profile.user.last_name }}
+                                    {% else %}
+                                        {{ interaction.manual_first_name }} {{ interaction.manual_last_name|default:"" }}
+                                    {% endif %}
+                                </h5>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar3"></i> {{ interaction.created_at|date:"M j, Y g:i A" }}
+                                    by {{ interaction.welcomer_profile.user.first_name }}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                {% if interaction.interaction_day %}
+                                    <span class="badge bg-primary">{{ interaction.interaction_day }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Contact Info -->
+                            <div class="mb-3">
+                                {% if interaction.parent_profile %}
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-telephone"></i> {{ interaction.parent_profile.phone_number|default:"No phone" }}
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-envelope"></i> {{ interaction.parent_profile.user.email|default:"No email" }}
+                                    </small>
+                                {% else %}
+                                    {% if interaction.manual_phone %}
+                                        <small class="text-muted d-block">
+                                            <i class="bi bi-telephone"></i> {{ interaction.manual_phone }}
+                                        </small>
+                                    {% endif %}
+                                    {% if interaction.manual_email %}
+                                        <small class="text-muted d-block">
+                                            <i class="bi bi-envelope"></i> {{ interaction.manual_email }}
+                                        </small>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Church Attendance -->
+                            <div class="mb-3">
+                                {% if interaction.attends_church == True %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Attends Church
+                                        {% if interaction.current_church %} - {{ interaction.current_church }}{% endif %}
+                                    </span>
+                                {% elif interaction.attends_church == False %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-x-circle"></i> Doesn't Attend Church
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-question-circle"></i> Church Status Unknown
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Key Information Preview -->
+                            <div class="mb-3">
+                                {% if interaction.faith_status %}
+                                    <div class="small text-truncate mb-1">
+                                        <strong>Faith:</strong> {{ interaction.faith_status|truncatechars:50 }}
+                                    </div>
+                                {% endif %}
+                                {% if interaction.knows_lighthouse_members %}
+                                    <div class="small text-truncate mb-1">
+                                        <strong>Knows:</strong> {{ interaction.knows_lighthouse_members|truncatechars:50 }}
+                                    </div>
+                                {% endif %}
+                                {% if interaction.interested_in_future_events %}
+                                    <div class="small text-truncate mb-1">
+                                        <strong>Interested:</strong> {{ interaction.interested_in_future_events|truncatechars:50 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Children Info -->
+                            {% if interaction.parent_profile and interaction.parent_profile.children.exists %}
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-people"></i> <strong>Children:</strong>
+                                        {% for child in interaction.parent_profile.children.all %}
+                                            {{ child.first_name }} ({{ child.class_name }}){% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </small>
+                                </div>
+                            {% elif interaction.manual_children_info %}
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-people"></i> <strong>Children:</strong> {{ interaction.manual_children_info }}
+                                    </small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <small class="text-muted">
+                                <i class="bi bi-person-badge"></i> {{ interaction.welcomer_profile.user.get_full_name }}
+                            </small>
+                            <div>
+                                <a href="{% url 'interaction_detail' interaction.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                                {% if user.is_staff or user == interaction.welcomer_profile.user %}
+                                    <a href="{% url 'edit_interaction' interaction.id %}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if interactions.has_other_pages %}
+            <nav aria-label="Interactions pagination">
+                <ul class="pagination justify-content-center">
+                    {% if interactions.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.day %}day={{ request.GET.day }}&{% endif %}{% if request.GET.church %}church={{ request.GET.church }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ interactions.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in interactions.paginator.page_range %}
+                        {% if interactions.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > interactions.number|add:'-3' and num < interactions.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.day %}day={{ request.GET.day }}&{% endif %}{% if request.GET.church %}church={{ request.GET.church }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if interactions.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.day %}day={{ request.GET.day }}&{% endif %}{% if request.GET.church %}church={{ request.GET.church }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ interactions.next_page_number }}">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+        
+    {% else %}
+        <!-- No Results -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-chat-dots display-1 text-muted"></i>
+            </div>
+            {% if request.GET.search or request.GET.day or request.GET.church %}
+                <h4>No conversations found matching your search</h4>
+                <p class="text-muted">Try adjusting your search criteria or <a href="{% url 'interaction_list' %}">clear all filters</a></p>
+            {% else %}
+                <h4>No conversations recorded yet</h4>
+                <p class="text-muted">Start recording conversations with parents and visitors</p>
+            {% endif %}
+            <a href="{% url 'add_interaction' %}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Record Your First Conversation
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit search form on dropdown changes (optional UX improvement)
+document.addEventListener('DOMContentLoaded', function() {
+    const dayFilter = document.getElementById('day_filter');
+    const churchFilter = document.getElementById('church_filter');
+    
+    if (dayFilter && churchFilter) {
+        dayFilter.addEventListener('change', function() {
+            // Optionally auto-submit form on filter change
+            // this.form.submit();
+        });
+        
+        churchFilter.addEventListener('change', function() {
+            // Optionally auto-submit form on filter change
+            // this.form.submit();
+        });
+    }
+});
+</script>
+{% endblock %}

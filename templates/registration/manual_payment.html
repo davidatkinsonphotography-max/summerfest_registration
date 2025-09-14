@@ -18,61 +18,38 @@
                         <br>This form is for recording payments received in person.
                     </div>
 
-                    <!-- Step 1: Parent Selection -->
-                    {% if not parent_profile %}
-                    <div class="card border-primary mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h5><i class="bi bi-person-check"></i> Step 1: Select Parent</h5>
-                        </div>
-                        <div class="card-body">
-                            <form method="post">
-                                {% csrf_token %}
-                                
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <label for="{{ form.parent_username.id_for_label }}" class="form-label">
-                                            {{ form.parent_username.label }}
-                                        </label>
-                                        {{ form.parent_username }}
-                                        <div class="form-text">{{ form.parent_username.help_text }}</div>
-                                        {% if form.parent_username.errors %}
-                                            <div class="text-danger small">{{ form.parent_username.errors }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4 d-flex align-items-end">
-                                        <button type="submit" name="lookup_parent" class="btn btn-primary btn-lg w-100">
-                                            <i class="bi bi-search"></i> Find Parent
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Step 2: Record Payment -->
-                    {% if parent_profile %}
+                    <!-- Record Payment Form -->
                     <div class="card border-success mb-4">
                         <div class="card-header bg-success text-white">
-                            <h5><i class="bi bi-cash-stack"></i> Step 2: Record Payment</h5>
+                            <h5><i class="bi bi-cash-stack"></i> Record Manual Payment</h5>
                         </div>
                         <div class="card-body">
+                            {% if parent_profile %}
                             <!-- Parent Information -->
                             <div class="alert alert-success">
-                                <h6><i class="bi bi-person"></i> Parent Found:</h6>
+                                <h6><i class="bi bi-person"></i> Payment will be credited to:</h6>
                                 <strong>{{ parent_profile.first_name }} {{ parent_profile.last_name }}</strong> ({{ parent_profile.user.username }})
                                 <br><small>{{ parent_profile.email }} • {{ parent_profile.phone_number }}</small>
-                                {% if search_info %}
-                                    <br><small class="text-muted">Found by: {{ search_info.found_by }}</small>
-                                {% endif %}
                                 {% if parent_profile.payment_account %}
                                     <br><strong>Current Balance:</strong> ${{ parent_profile.payment_account.balance }}
                                 {% endif %}
                             </div>
+                            {% endif %}
                             
                             <form method="post" id="manual-payment-form">
                                 {% csrf_token %}
-                                <input type="hidden" name="parent_username" value="{{ parent_profile.user.username }}">
+                                
+                                <!-- Parent Selection -->
+                                <div class="mb-3">
+                                    <label for="{{ form.parent_username.id_for_label }}" class="form-label">
+                                        <i class="bi bi-person-check"></i> {{ form.parent_username.label }}
+                                    </label>
+                                    {{ form.parent_username }}
+                                    <div class="form-text">{{ form.parent_username.help_text }}</div>
+                                    {% if form.parent_username.errors %}
+                                        <div class="text-danger small">{{ form.parent_username.errors }}</div>
+                                    {% endif %}
+                                </div>
 
                         <!-- Amount Field -->
                         <div class="mb-3">
@@ -141,7 +118,7 @@
                                 <!-- Action Buttons -->
                                 <div class="d-flex justify-content-between">
                                     <a href="{% url 'manual_payment' %}" class="btn btn-outline-secondary">
-                                        <i class="bi bi-arrow-left"></i> New Search
+                                        <i class="bi bi-arrow-counterclockwise"></i> Reset Form
                                     </a>
                                     <button type="submit" name="record_payment" class="btn btn-warning btn-lg">
                                         <i class="bi bi-check-circle"></i> Record Payment
@@ -157,7 +134,6 @@
                             </form>
                         </div>
                     </div>
-                    {% endif %}
                 </div>
             </div>
 
@@ -176,9 +152,8 @@
                         <li><strong>Submit:</strong> The funds will be added to their account immediately</li>
                     </ol>
                     
-                    <div class="alert alert-warning small mt-3">
-                        <strong>Important:</strong> Make sure to get the correct username to avoid crediting the wrong account.
-                        If unsure, use the "Lookup Account" feature to verify parent details first.
+                    <div class="alert alert-info small mt-3">
+                        <strong>Streamlined Process:</strong> Simply select the parent, enter the payment details, and submit. No need to search for children - the payment is credited directly to the parent's account.
                     </div>
                 </div>
             </div>
@@ -214,48 +189,69 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
 function setAmount(amount) {
-    document.getElementById('{{ form.amount.id_for_label }}').value = amount;
+    const amountField = document.querySelector('input[name="amount"]');
+    if (amountField) {
+        amountField.value = amount;
+    }
 }
 
 // Auto-focus on dropdown
 document.addEventListener('DOMContentLoaded', function() {
-    {% if not parent_profile %}
-    const parentSelect = document.getElementById('{{ form.parent_username.id_for_label }}');
-    if (parentSelect) {
+    const parentSelect = document.querySelector('select[name="parent_username"]');
+    if (parentSelect && parentSelect.value === '') {
         parentSelect.focus();
     }
-    {% endif %}
 });
 
-// Payment form validation (only if parent is found)
-{% if parent_profile %}
-document.getElementById('manual-payment-form').addEventListener('submit', function(e) {
-    if (e.submitter && e.submitter.name === 'record_payment') {
-        const amount = document.getElementById('{{ form.amount.id_for_label }}').value.trim();
-        const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-        
-        if (!amount || !paymentMethod) {
-            e.preventDefault();
-            alert('Please fill in all required fields (Amount and Payment Method).');
-            return false;
-        }
-        
-        // Confirm the payment details
-        const confirmation = confirm(`Confirm payment details:\nParent: {{ parent_profile.first_name }} {{ parent_profile.last_name }}\nAmount: $${amount}\nMethod: ${paymentMethod.value.toUpperCase()}\n\nProceed?`);
-        
-        if (!confirmation) {
-            e.preventDefault();
-            return false;
-        }
-        
-        // Show loading state
-        e.submitter.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Recording...';
-        e.submitter.disabled = true;
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('manual-payment-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const parent = document.querySelector('select[name="parent_username"]').value;
+            const amount = document.querySelector('input[name="amount"]').value.trim();
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+            
+            if (!parent) {
+                e.preventDefault();
+                alert('Please select a parent from the dropdown.');
+                return false;
+            }
+            
+            if (!amount) {
+                e.preventDefault();
+                alert('Please enter the payment amount.');
+                return false;
+            }
+            
+            if (!paymentMethod) {
+                e.preventDefault();
+                alert('Please select a payment method (Cash or EFTPOS).');
+                return false;
+            }
+            
+            // Confirm the payment details
+            const parentText = document.querySelector('select[name="parent_username"] option:checked').text;
+            const confirmation = confirm(`Confirm payment details:\nParent: ${parentText}\nAmount: $${amount}\nMethod: ${paymentMethod.value.toUpperCase()}\n\nProceed?`);
+            
+            if (!confirmation) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[name="record_payment"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Recording...';
+                submitBtn.disabled = true;
+            }
+        });
     }
 });
-{% endif %}
-
 </script>
 {% endblock %}

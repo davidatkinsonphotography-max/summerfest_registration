@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Conversation - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0"><i class="bi bi-pencil-square"></i> Edit Conversation</h3>
+                            <p class="mb-0 mt-2">
+                                Originally recorded {{ interaction.created_at|date:"M j, Y \a\t g:i A" }} by {{ interaction.welcomer_profile.user.get_full_name }}
+                            </p>
+                        </div>
+                        <div>
+                            <a href="{% url 'interaction_detail' interaction.id %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Warning Notice for Non-Original Users -->
+                    {% if user != interaction.welcomer_profile.user and not user.is_staff %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Note:</strong> You are editing a conversation originally recorded by {{ interaction.welcomer_profile.user.get_full_name }}.
+                            Please ensure any changes are accurate and necessary.
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Current Person Information Display -->
+                    <div class="alert alert-info mb-4">
+                        <h6 class="mb-2"><i class="bi bi-info-circle"></i> Current Person Information:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Name:</strong>
+                                {% if interaction.parent_profile %}
+                                    {{ interaction.parent_profile.user.first_name }} {{ interaction.parent_profile.user.last_name }}
+                                    <span class="badge bg-success ms-1">In System</span>
+                                {% else %}
+                                    {{ interaction.manual_first_name }} {{ interaction.manual_last_name|default:"" }}
+                                    <span class="badge bg-warning text-dark ms-1">Manual Entry</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Contact:</strong>
+                                {% if interaction.parent_profile %}
+                                    {{ interaction.parent_profile.phone_number|default:"No phone" }}
+                                {% else %}
+                                    {{ interaction.manual_phone|default:"No phone" }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mt-2 small text-muted">
+                            <i class="bi bi-lightbulb"></i> 
+                            <strong>Note:</strong> You cannot change who this conversation is about when editing. 
+                            If you need to record a conversation with a different person, please 
+                            <a href="{% url 'add_interaction' %}">create a new conversation</a>.
+                        </div>
+                    </div>
+                    
+                    <form method="post" id="edit-interaction-form">
+                        {% csrf_token %}
+                        
+                        <!-- Conversation Details Section -->
+                        <div class="card border-warning mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Conversation Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Interaction Day -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">{{ form.interaction_day.label }}</label>
+                                    <div class="row">
+                                        {% for choice in form.interaction_day %}
+                                            <div class="col-md-2 col-sm-4 col-6 mb-2">
+                                                <div class="form-check">
+                                                    {{ choice.tag }}
+                                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                        {{ choice.choice_label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if form.interaction_day.errors %}
+                                        <div class="text-danger small">{{ form.interaction_day.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Church Attendance -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">{{ form.attends_church.label }}</label>
+                                    <div class="row">
+                                        {% for choice in form.attends_church %}
+                                            <div class="col-md-4 mb-2">
+                                                <div class="form-check">
+                                                    {{ choice.tag }}
+                                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                        {{ choice.choice_label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if form.attends_church.errors %}
+                                        <div class="text-danger small">{{ form.attends_church.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Current Church (conditional) -->
+                                <div id="current-church-section" class="mb-4" style="display: none;">
+                                    <label for="{{ form.current_church.id_for_label }}" class="form-label">{{ form.current_church.label }}</label>
+                                    {{ form.current_church }}
+                                    {% if form.current_church.errors %}
+                                        <div class="text-danger small">{{ form.current_church.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Questions -->
+                        <div class="card border-info mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="bi bi-question-circle"></i> Conversation Questions</h5>
+                                <small class="mt-1">Update any information that was discussed or has changed</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <label for="{{ form.faith_status.id_for_label }}" class="form-label">{{ form.faith_status.label }}</label>
+                                    {{ form.faith_status }}
+                                    <div class="form-text">Open-ended question about their current faith journey</div>
+                                    {% if form.faith_status.errors %}
+                                        <div class="text-danger small">{{ form.faith_status.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.knows_lighthouse_members.id_for_label }}" class="form-label">{{ form.knows_lighthouse_members.label }}</label>
+                                    {{ form.knows_lighthouse_members }}
+                                    <div class="form-text">Names of any Lighthouse Church members they know</div>
+                                    {% if form.knows_lighthouse_members.errors %}
+                                        <div class="text-danger small">{{ form.knows_lighthouse_members.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.previous_lighthouse_interaction.id_for_label }}" class="form-label">{{ form.previous_lighthouse_interaction.label }}</label>
+                                    {{ form.previous_lighthouse_interaction }}
+                                    <div class="form-text">Any previous interactions with Lighthouse Church members or events</div>
+                                    {% if form.previous_lighthouse_interaction.errors %}
+                                        <div class="text-danger small">{{ form.previous_lighthouse_interaction.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.interested_in_future_events.id_for_label }}" class="form-label">{{ form.interested_in_future_events.label }}</label>
+                                    {{ form.interested_in_future_events }}
+                                    <div class="form-text">Interest in Meet Jesus, church services, community activities, etc.</div>
+                                    {% if form.interested_in_future_events.errors %}
+                                        <div class="text-danger small">{{ form.interested_in_future_events.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.additional_notes.id_for_label }}" class="form-label">{{ form.additional_notes.label }}</label>
+                                    {{ form.additional_notes }}
+                                    <div class="form-text">Any additional observations, prayer requests, or follow-up notes</div>
+                                    {% if form.additional_notes.errors %}
+                                        <div class="text-danger small">{{ form.additional_notes.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Edit History (if updated before) -->
+                        {% if interaction.updated_at != interaction.created_at %}
+                            <div class="card border-secondary mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0 text-muted"><i class="bi bi-clock-history"></i> Edit History</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <small class="text-muted">
+                                        Last updated: {{ interaction.updated_at|date:"F j, Y \a\t g:i A" }}
+                                        {% if interaction.updated_at|date:"Ymd" != interaction.created_at|date:"Ymd" %}
+                                            ({{ interaction.updated_at|timesince:interaction.created_at }} after original)
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{% url 'interaction_detail' interaction.id %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Cancel
+                                </a>
+                                <a href="{% url 'interaction_list' %}" class="btn btn-outline-secondary ms-2">
+                                    <i class="bi bi-list"></i> Back to List
+                                </a>
+                            </div>
+                            <div>
+                                <!-- Delete Button (Staff only) -->
+                                {% if user.is_staff %}
+                                    <button type="button" class="btn btn-outline-danger me-3" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                        <i class="bi bi-trash"></i> Delete Conversation
+                                    </button>
+                                {% endif %}
+                                <button type="submit" class="btn btn-warning btn-lg">
+                                    <i class="bi bi-check-circle"></i> Update Conversation
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal (Staff only) -->
+{% if user.is_staff %}
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle"></i> Delete Conversation
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Are you sure you want to delete this conversation?</strong></p>
+                    <p>This action cannot be undone. The conversation record will be permanently removed from the system.</p>
+                    <div class="bg-light p-3 rounded mt-3">
+                        <strong>Conversation Details:</strong><br>
+                        <small class="text-muted">
+                            {% if interaction.parent_profile %}
+                                {{ interaction.parent_profile.user.first_name }} {{ interaction.parent_profile.user.last_name }}
+                            {% else %}
+                                {{ interaction.manual_first_name }} {{ interaction.manual_last_name|default:"" }}
+                            {% endif %}
+                            - {{ interaction.created_at|date:"M j, Y" }}
+                            {% if interaction.interaction_day %} ({{ interaction.interaction_day }}){% endif %}
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <form method="post" action="{% url 'delete_interaction' interaction.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Yes, Delete Conversation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const churchRadios = document.querySelectorAll('input[name="attends_church"]');
+    
+    // Handle church attendance changes
+    churchRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            toggleChurchSection(this.value);
+        });
+    });
+    
+    // Initialize based on current selection
+    const selectedChurch = document.querySelector('input[name="attends_church"]:checked');
+    if (selectedChurch) {
+        toggleChurchSection(selectedChurch.value);
+    }
+    
+    // Form change tracking for unsaved changes warning
+    let formChanged = false;
+    const form = document.getElementById('edit-interaction-form');
+    const originalFormData = new FormData(form);
+    
+    // Track form changes
+    form.addEventListener('input', function() {
+        formChanged = true;
+    });
+    
+    form.addEventListener('change', function() {
+        formChanged = true;
+    });
+    
+    // Warn before leaving if changes are unsaved
+    window.addEventListener('beforeunload', function(e) {
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            return e.returnValue;
+        }
+    });
+    
+    // Don't warn when form is submitted
+    form.addEventListener('submit', function() {
+        formChanged = false;
+    });
+    
+    // Don't warn when clicking cancel/back buttons
+    document.querySelectorAll('a[href*="interaction"]').forEach(link => {
+        link.addEventListener('click', function() {
+            if (formChanged && !confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                event.preventDefault();
+                return false;
+            }
+        });
+    });
+});
+
+function toggleChurchSection(value) {
+    const churchSection = document.getElementById('current-church-section');
+    if (value === 'True') {
+        churchSection.style.display = 'block';
+    } else {
+        churchSection.style.display = 'none';
+        document.getElementById('id_current_church').value = '';
+    }
+}
+
+// Auto-resize textareas
+document.addEventListener('DOMContentLoaded', function() {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Initial resize
+        textarea.style.height = 'auto';
+        textarea.style.height = (textarea.scrollHeight) + 'px';
+    });
+});
+</script>
+{% endblock %}

@@ -584,3 +584,128 @@ class DailyAttendanceCharge(models.Model):
     
     def __str__(self):
         return f"{self.date} - {self.children_count} children - ${self.actual_charge}"
+
+
+# Welcomer System Models
+
+class WelcomerProfile(models.Model):
+    """Profile for welcomers who interact with parents"""
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - Welcomer"
+    
+    def get_interaction_count(self):
+        """Get total number of interactions recorded by this welcomer"""
+        return self.interactions.count()
+
+
+class ParentInteraction(models.Model):
+    """Track interactions between welcomers and parents during Summerfest"""
+    
+    DAY_CHOICES = [
+        ('wednesday', 'Wednesday'),
+        ('thursday', 'Thursday'),
+        ('friday', 'Friday'),
+        ('saturday', 'Saturday'),
+        ('sunday', 'Sunday'),
+    ]
+    
+    SEARCH_METHOD_CHOICES = [
+        ('parent_search', 'Found by Parent Name'),
+        ('child_search', 'Found by Child Name'),
+        ('no_record', 'No Record Found - Manual Entry'),
+    ]
+    
+    # How the person was found/identified
+    search_method = models.CharField(max_length=20, choices=SEARCH_METHOD_CHOICES)
+    
+    # Link to existing parent if found
+    parent_profile = models.ForeignKey(ParentProfile, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions')
+    
+    # Manual entry fields for when no record found
+    manual_first_name = models.CharField(max_length=100, blank=True, help_text="First name if no record found")
+    manual_last_name = models.CharField(max_length=100, blank=True, help_text="Last name if no record found")
+    manual_phone = models.CharField(max_length=20, blank=True, help_text="Phone number if no record found")
+    manual_email = models.EmailField(blank=True, help_text="Email if no record found")
+    manual_address = models.TextField(blank=True, help_text="Address if no record found")
+    manual_children_info = models.TextField(blank=True, help_text="Children and class info if no record found")
+    
+    # Interaction details
+    welcomer = models.ForeignKey(WelcomerProfile, on_delete=models.CASCADE, related_name='interactions')
+    interaction_day = models.CharField(max_length=20, choices=DAY_CHOICES)
+    
+    # Conversation questions
+    current_church = models.CharField(max_length=200, blank=True, help_text="Which church do they currently attend?")
+    attends_church = models.BooleanField(null=True, blank=True, help_text="Do they currently attend a church?")
+    faith_status = models.TextField(blank=True, help_text="Current faith status (open-ended)")
+    knows_lighthouse_members = models.TextField(blank=True, help_text="Do they know anyone from Lighthouse Church?")
+    previous_lighthouse_interaction = models.TextField(blank=True, help_text="Have they interacted with Lighthouse Church before?")
+    interested_in_future_events = models.TextField(blank=True, help_text="Interest in future events, services, activities")
+    
+    # Additional notes
+    additional_notes = models.TextField(blank=True, help_text="Any additional observations or notes")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        if self.parent_profile:
+            name = f"{self.parent_profile.first_name} {self.parent_profile.last_name}"
+        else:
+            name = f"{self.manual_first_name} {self.manual_last_name}"
+        return f"{self.get_interaction_day_display()} - {name} (by {self.welcomer.user.get_full_name()})"
+    
+    def get_person_name(self):
+        """Get the name of the person being tracked"""
+        if self.parent_profile:
+            return f"{self.parent_profile.first_name} {self.parent_profile.last_name}"
+        else:
+            return f"{self.manual_first_name} {self.manual_last_name}"
+    
+    def get_contact_info(self):
+        """Get contact information for the person"""
+        if self.parent_profile:
+            return {
+                'phone': self.parent_profile.phone_number,
+                'email': self.parent_profile.email,
+                'address': f"{self.parent_profile.street_address}, {self.parent_profile.city} {self.parent_profile.postcode}"
+            }
+        else:
+            return {
+                'phone': self.manual_phone,
+                'email': self.manual_email,
+                'address': self.manual_address
+            }
+    
+    def get_children_info(self):
+        """Get information about children"""
+        if self.parent_profile:
+            children = self.parent_profile.children.all()
+            return [{
+                'name': f"{child.first_name} {child.last_name}",
+                'class': child.get_class_short_name()
+            } for child in children]
+        else:
+            # Parse manual children info
+            if self.manual_children_info:
+                return [{'name': 'Manual Entry', 'class': self.manual_children_info}]
+            return []
+    
+    @classmethod
+    def get_all_interactions_for_person(cls, parent_profile=None, manual_name=None):
+        """Get all interactions for a specific person"""
+        if parent_profile:
+            return cls.objects.filter(parent_profile=parent_profile).order_by('created_at')
+        elif manual_name:
+            first_name, last_name = manual_name.split(' ', 1) if ' ' in manual_name else (manual_name, '')
+            return cls.objects.filter(
+                manual_first_name__iexact=first_name,
+                manual_last_name__iexact=last_name
+            ).order_by('created_at')
+        return cls.objects.none()

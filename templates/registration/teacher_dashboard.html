@@ -69,13 +69,12 @@
                                             <!-- Parent Column -->
                                             <td>
                                                 <strong>{{ data.child.parent.first_name }} {{ data.child.parent.last_name }}</strong><br>
-                                                <small class="text-muted">{{ data.child.parent.phone }}</small>
+                                                <small class="text-muted">{{ data.child.parent.phone_number }}</small>
                                             </td>
                                             <!-- Emergency Contact Column -->
                                             <td>
                                                 <strong>{{ data.child.parent.emergency_contact_name }}</strong><br>
-                                                <small>{{ data.child.parent.emergency_contact_phone }}</small><br>
-                                                <small class="text-muted">{{ data.child.parent.get_emergency_contact_relationship_display }}</small>
+                                                <small>{{ data.child.parent.emergency_contact_phone }}</small>
                                             </td>
                                             <!-- Class Column -->
                                             <td style="width: 80px;">
@@ -141,25 +140,28 @@
                                                 <div class="d-grid gap-1">
                                                     {% if not data.attendance %}
                                                         <!-- Not yet arrived - allow check-in -->
-                                                        <button class="btn btn-success" style="height: 50px;" 
+                                                        <button class="btn btn-success d-flex align-items-center justify-content-center" style="height: 50px; flex-direction: column;" 
                                                                 onclick="manualCheckIn({{ data.child.id }}, '{{ data.child.first_name }} {{ data.child.last_name }}')">
-                                                            <i class="bi bi-box-arrow-in-right"></i><br>Check In
+                                                            <i class="bi bi-box-arrow-in-right"></i>
+                                                            <small>Check In</small>
                                                         </button>
                                                     {% elif data.attendance.status == 'checked_in' %}
                                                         <!-- Checked in - allow to go to class -->
-                                                        <button class="btn btn-primary" style="height: 50px;" 
+                                                        <button class="btn btn-primary d-flex align-items-center justify-content-center" style="height: 50px; flex-direction: column;" 
                                                                 onclick="changeStatus({{ data.child.id }}, 'in_class', '{{ data.child.first_name }} {{ data.child.last_name }}')">
-                                                            <i class="bi bi-book"></i><br>In Class
+                                                            <i class="bi bi-book"></i>
+                                                            <small>In Class</small>
                                                         </button>
                                                     {% elif data.attendance.status == 'in_class' %}
                                                         <!-- In class - allow pickup -->
-                                                        <button class="btn btn-warning" style="height: 50px;" 
+                                                        <button class="btn btn-warning d-flex align-items-center justify-content-center" style="height: 50px; flex-direction: column;" 
                                                                 onclick="changeStatus({{ data.child.id }}, 'picked_up', '{{ data.child.first_name }} {{ data.child.last_name }}')">
-                                                            <i class="bi bi-person-check"></i><br>Picked Up
+                                                            <i class="bi bi-person-check"></i>
+                                                            <small>Picked Up</small>
                                                         </button>
                                                     {% elif data.attendance.status == 'picked_up' %}
                                                         <!-- Already picked up -->
-                                                        <span class="badge bg-purple text-white" style="height: 50px; line-height: 40px;">Complete</span>
+                                                        <span class="border border-dark text-dark d-flex align-items-center justify-content-center" style="height: 50px; border-radius: 0.375rem;">Complete</span>
                                                     {% endif %}
                                                 </div>
                                             </td>

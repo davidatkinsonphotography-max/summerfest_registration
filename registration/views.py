@@ -549,12 +549,16 @@ def site_map(request):
             ('Manual Sign-In', '/manual_sign_in/', 'Sign in children without QR codes'),
             ('Manual Payment Entry', '/payment/manual/', 'Record cash/EFTPOS payments'),
             ('Payment Account Lookup', '/payment/lookup/', 'Search parent payment accounts'),
+            ('Welcomer Dashboard', '/welcomer/', 'Parent conversation tracking system'),
+            ('Record Conversation', '/welcomer/add/', 'Record new parent interaction'),
+            ('View All Conversations', '/welcomer/list/', 'Search and view all recorded conversations'),
             # Dynamic checkout URLs will be added if children exist
         ],
         'Admin/Superuser': [
             ('Django Admin', '/admin/', 'Full administrative interface'),
             ('Data Export Dashboard', '/export/', 'Export all registration data to CSV'),
             ('Download Complete Report', '/export/all/', 'Download comprehensive CSV report'),
+            ('Download Parent Conversations', '/export/conversations/', 'Export all welcomer parent conversations'),
         ]
     }
     

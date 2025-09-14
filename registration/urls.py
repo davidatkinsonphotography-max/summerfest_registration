@@ -5,7 +5,7 @@ from .payment_views import (
     payment_dashboard, add_funds, payment_success, payment_cancel, 
     manual_payment, payment_lookup, stripe_webhook
 )
-from .export_views_fixed import export_dashboard, export_all_data_csv, export_attendance_detailed_csv, export_payments_detailed_csv
+from .export_views_fixed import export_dashboard, export_all_data_csv, export_attendance_detailed_csv, export_payments_detailed_csv, export_parent_conversations_csv
 from .pass_views import purchase_pass, pass_purchase_success, pass_purchase_cancel, my_passes
 from .welcomer_views import (
     welcomer_dashboard, add_interaction, interaction_list, interaction_detail,
@@ -68,6 +68,7 @@ urlpatterns = [
     path('export/all/', export_all_data_csv, name='export_all_data'),
     path('export/attendance/', export_attendance_detailed_csv, name='export_attendance_detailed'),
     path('export/payments/', export_payments_detailed_csv, name='export_payments_detailed'),
+    path('export/conversations/', export_parent_conversations_csv, name='export_parent_conversations'),
     
     # Pass purchase system
     path('passes/purchase/', purchase_pass, name='purchase_pass'),

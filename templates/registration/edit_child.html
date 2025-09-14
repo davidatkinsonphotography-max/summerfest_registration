@@ -136,3 +136,10 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'registration/css/three_field_date_widget.css' %}">
+<script src="{% static 'registration/js/three_field_date_widget.js' %}"></script>
+{{ form.media }}
+{% endblock %}

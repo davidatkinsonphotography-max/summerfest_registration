@@ -1,0 +1,64 @@
+/* Three Field Date Widget CSS */
+
+.three-field-date-widget {
+    margin-bottom: 0.5rem;
+}
+
+.three-field-date-widget input[type="text"] {
+    font-family: monospace;
+    font-weight: 500;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.three-field-date-widget input[type="text"]:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.three-field-date-widget input[type="text"].is-invalid {
+    border-color: #dc3545;
+}
+
+.three-field-date-widget input[type="text"].is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.three-field-date-widget .invalid-feedback {
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #dc3545;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+    .three-field-date-widget input[type="text"] {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .three-field-date-widget .d-flex {
+        justify-content: center;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .three-field-date-widget input[type="text"] {
+        border-width: 2px;
+    }
+    
+    .three-field-date-widget input[type="text"]:focus {
+        outline: 2px solid;
+        outline-offset: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .three-field-date-widget input[type="text"] {
+        transition: none;
+    }
+}

@@ -2,10 +2,11 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from .models import ParentProfile, Child
+from .widgets import ThreeFieldDateField
 from datetime import date
 from decimal import Decimal
 import re
-from .models import ParentProfile, Child, PaymentTransaction
 
 
 class ParentRegistrationForm(UserCreationForm):
@@ -141,8 +142,7 @@ class ParentRegistrationForm(UserCreationForm):
 class ChildRegistrationForm(forms.ModelForm):
     """Child registration form"""
     
-    date_of_birth = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    date_of_birth = ThreeFieldDateField(
         help_text="Child must be born after January 1, 2010"
     )
     

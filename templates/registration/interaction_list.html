@@ -112,7 +112,11 @@
                                 </h5>
                                 <small class="text-muted">
                                     <i class="bi bi-calendar3"></i> {{ interaction.created_at|date:"M j, Y g:i A" }}
-                                    by {{ interaction.welcomer_profile.user.first_name }}
+                                    {% if interaction.conversation_team_member %}
+                                        conversation by {{ interaction.conversation_team_member }}
+                                    {% else %}
+                                        by {{ interaction.welcomer_profile.user.first_name }}
+                                    {% endif %}
                                 </small>
                             </div>
                             <div class="text-end">
@@ -202,7 +206,12 @@
                         </div>
                         <div class="card-footer d-flex justify-content-between">
                             <small class="text-muted">
-                                <i class="bi bi-person-badge"></i> {{ interaction.welcomer_profile.user.get_full_name }}
+                                {% if interaction.conversation_team_member %}
+                                    <i class="bi bi-person-badge"></i> {{ interaction.conversation_team_member }}
+                                    <span class="ms-2 text-muted">recorded by {{ interaction.welcomer_profile.user.first_name }}</span>
+                                {% else %}
+                                    <i class="bi bi-person-badge"></i> {{ interaction.welcomer_profile.user.get_full_name }}
+                                {% endif %}
                             </small>
                             <div>
                                 <a href="{% url 'interaction_detail' interaction.id %}" class="btn btn-outline-primary btn-sm">

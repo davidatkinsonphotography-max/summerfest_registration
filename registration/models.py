@@ -633,7 +633,8 @@ class ParentInteraction(models.Model):
     manual_children_info = models.TextField(blank=True, help_text="Children and class info if no record found")
     
     # Interaction details
-    welcomer = models.ForeignKey(WelcomerProfile, on_delete=models.CASCADE, related_name='interactions')
+    welcomer = models.ForeignKey(WelcomerProfile, on_delete=models.CASCADE, related_name='interactions', help_text="The welcomer who is recording this conversation")
+    conversation_team_member = models.CharField(max_length=100, blank=True, help_text="Name of team member who had the conversation (if different from person recording it)")
     interaction_day = models.CharField(max_length=20, choices=DAY_CHOICES)
     
     # Conversation questions
@@ -659,7 +660,14 @@ class ParentInteraction(models.Model):
             name = f"{self.parent_profile.first_name} {self.parent_profile.last_name}"
         else:
             name = f"{self.manual_first_name} {self.manual_last_name}"
-        return f"{self.get_interaction_day_display()} - {name} (by {self.welcomer.user.get_full_name()})"
+        
+        # Show the team member who had the conversation if specified
+        if self.conversation_team_member:
+            by_person = f"conversation by {self.conversation_team_member}, recorded by {self.welcomer.user.get_full_name()}"
+        else:
+            by_person = f"by {self.welcomer.user.get_full_name()}"
+            
+        return f"{self.get_interaction_day_display()} - {name} ({by_person})"
     
     def get_person_name(self):
         """Get the name of the person being tracked"""

@@ -374,6 +374,15 @@ class ManualPaymentForm(forms.Form):
             return self._found_parent
         return None
     
+    def get_parent_and_children(self):
+        """Get parent profile and children for manual sign-in"""
+        if hasattr(self, '_found_parent'):
+            parent_profile = self._found_parent
+            children = parent_profile.children.all()
+            return parent_profile, children
+        else:
+            raise ValidationError("No parent data available. Please search again.")
+    
     def get_search_info(self):
         """Get information about how the parent was found"""
         if hasattr(self, '_found_parent') and hasattr(self, '_search_method'):

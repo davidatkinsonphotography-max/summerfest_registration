@@ -334,11 +334,11 @@
                                 {% for date, data in daily_income.items %}
                                 <tr>
                                     <td>{{ date }}</td>
-                                    <td>${{ data.Credit Card }}</td>
-                                    <td>${{ data.Cash }}</td>
-                                    <td>${{ data.EFTPOS }}</td>
-                                    <td>${{ data.Bank Transfer }}</td>
-                                    <td>${{ data.Other }}</td>
+                                    <td>${{ data.credit_card }}</td>
+                                    <td>${{ data.cash }}</td>
+                                    <td>${{ data.eftpos }}</td>
+                                    <td>${{ data.bank_transfer }}</td>
+                                    <td>${{ data.other }}</td>
                                     <td><strong>${{ data.total }}</strong></td>
                                 </tr>
                                 {% endfor %}

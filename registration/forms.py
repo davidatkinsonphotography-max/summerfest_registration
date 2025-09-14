@@ -186,6 +186,10 @@ class ChildRegistrationForm(forms.ModelForm):
             self.fields['gender'].empty_label = None
         if 'child_class' in self.fields:
             self.fields['child_class'].empty_label = None
+        
+        # Set photo consent to be checked by default for new forms
+        if not self.instance.pk:  # Only for new children, not when editing
+            self.fields['photo_consent'].initial = True
     
     def clean_has_dietary_needs(self):
         value = self.cleaned_data['has_dietary_needs']

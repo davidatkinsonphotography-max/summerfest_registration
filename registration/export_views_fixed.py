@@ -10,7 +10,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
 from django.db.models import Q
-from .models import ParentProfile, Child, Attendance, PaymentAccount, PaymentTransaction
+from .models import ParentProfile, Child, Attendance, PaymentAccount, PaymentTransaction, ParentInteraction
 
 def is_staff_user(user):
     """Check if user is staff or superuser"""
@@ -27,6 +27,7 @@ def export_dashboard(request):
         'total_attendance_records': Attendance.objects.count(),
         'total_payment_accounts': PaymentAccount.objects.count(),
         'total_transactions': PaymentTransaction.objects.count(),
+        'total_conversations': ParentInteraction.objects.count(),
     }
     return render(request, 'admin/export_dashboard.html', {'stats': stats})
 
@@ -419,6 +420,106 @@ def export_payments_detailed_csv(request):
             transaction.processed_by.username if transaction.processed_by else 'System',
             total_children,
             f"${transaction.payment_account.balance}"
+        ])
+    
+    return response
+
+
+@login_required
+@user_passes_test(is_staff_user)
+def export_parent_conversations_csv(request):
+    """Export all parent conversation interactions recorded by welcomers"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="summerfest_parent_conversations_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+    
+    writer = csv.writer(response)
+    
+    # Parent conversations header
+    writer.writerow([
+        'Conversation_ID',
+        'Date_Recorded',
+        'Interaction_Day',
+        'Person_Type',  # Registered Parent or Manual Entry
+        'Person_Name',
+        'Phone_Number',
+        'Email_Address',
+        'Home_Address',
+        'Children_Info',
+        'Recorded_By_User',
+        'Conversation_Team_Member',
+        'Attends_Church',
+        'Current_Church',
+        'Faith_Status',
+        'Knows_Lighthouse_Members',
+        'Previous_Lighthouse_Interaction',
+        'Interested_In_Future_Events',
+        'Additional_Notes',
+        'Search_Method',
+        'Last_Updated'
+    ])
+    
+    # Get all parent interactions with related data
+    interactions = ParentInteraction.objects.select_related(
+        'parent_profile__user',
+        'welcomer__user'
+    ).order_by('-created_at')
+    
+    for interaction in interactions:
+        # Determine person type and details
+        if interaction.parent_profile:
+            person_type = 'Registered Parent'
+            person_name = f"{interaction.parent_profile.first_name} {interaction.parent_profile.last_name}"
+            phone_number = interaction.parent_profile.phone_number or ''
+            email_address = interaction.parent_profile.email or ''
+            home_address = f"{interaction.parent_profile.street_address}, {interaction.parent_profile.city} {interaction.parent_profile.postcode}".strip(', ')
+            
+            # Get children information
+            children = interaction.parent_profile.children.all()
+            if children:
+                children_info = '; '.join([f"{child.first_name} {child.last_name} ({child.get_class_short_name()})" for child in children])
+            else:
+                children_info = 'No children registered'
+        else:
+            person_type = 'Manual Entry'
+            person_name = f"{interaction.manual_first_name} {interaction.manual_last_name or ''}".strip()
+            phone_number = interaction.manual_phone or ''
+            email_address = interaction.manual_email or ''
+            home_address = interaction.manual_address or ''
+            children_info = interaction.manual_children_info or ''
+        
+        # Handle church attendance
+        if interaction.attends_church is True:
+            attends_church = 'Yes'
+        elif interaction.attends_church is False:
+            attends_church = 'No'
+        else:
+            attends_church = 'Not Asked'
+        
+        # Get who recorded vs who had the conversation
+        recorded_by = interaction.welcomer.user.get_full_name() or interaction.welcomer.user.username
+        conversation_team_member = interaction.conversation_team_member or recorded_by
+        
+        writer.writerow([
+            interaction.id,
+            interaction.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            interaction.get_interaction_day_display() if interaction.interaction_day else '',
+            person_type,
+            person_name,
+            phone_number,
+            email_address,
+            home_address,
+            children_info,
+            recorded_by,
+            conversation_team_member,
+            attends_church,
+            interaction.current_church or '',
+            interaction.faith_status or '',
+            interaction.knows_lighthouse_members or '',
+            interaction.previous_lighthouse_interaction or '',
+            interaction.interested_in_future_events or '',
+            interaction.additional_notes or '',
+            interaction.get_search_method_display(),
+            interaction.updated_at.strftime('%Y-%m-%d %H:%M:%S')
         ])
     
     return response

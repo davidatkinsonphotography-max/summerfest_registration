@@ -278,10 +278,22 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <small class="text-muted d-block">Welcomer</small>
-                        <strong>{{ interaction.welcomer_profile.user.get_full_name }}</strong>
-                    </div>
+                        <div class="mb-3">
+                            {% if interaction.conversation_team_member %}
+                                <small class="text-muted d-block">Had Conversation</small>
+                                <strong>{{ interaction.conversation_team_member }}</strong>
+                            {% else %}
+                                <small class="text-muted d-block">Had Conversation</small>
+                                <strong>{{ interaction.welcomer_profile.user.get_full_name }}</strong>
+                            {% endif %}
+                        </div>
+                        
+                        {% if interaction.conversation_team_member %}
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Recorded By</small>
+                                <strong>{{ interaction.welcomer_profile.user.get_full_name }}</strong>
+                            </div>
+                        {% endif %}
                     
                     <div class="mb-3">
                         <small class="text-muted d-block">Date & Time</small>

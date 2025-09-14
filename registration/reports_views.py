@@ -130,7 +130,7 @@ def get_heard_about_summerfest_stats():
     ).order_by('-count')
     
     # Get display names
-    choices_dict = dict(ParentProfile.HOW_HEARD_CHOICES)
+    choices_dict = dict(ParentProfile.HEAR_ABOUT_CHOICES)
     result = []
     total = sum(item['count'] for item in heard_about)
     
@@ -221,25 +221,30 @@ def get_daily_income(start_date, end_date):
         transaction_count=Count('id')
     ).order_by('created_at__date', 'payment_method')
     
-    # Organize by date then payment method
-    result = defaultdict(lambda: defaultdict(lambda: {'amount': Decimal('0.00'), 'count': 0}))
-    daily_totals = defaultdict(lambda: {'amount': Decimal('0.00'), 'count': 0})
+    # Organize by date with all payment methods
+    result = defaultdict(lambda: {
+        'date': '',
+        'Credit Card': Decimal('0.00'),
+        'Cash': Decimal('0.00'), 
+        'EFTPOS': Decimal('0.00'),
+        'Bank Transfer': Decimal('0.00'),
+        'Other': Decimal('0.00'),
+        'total': Decimal('0.00')
+    })
     
     for item in transactions:
         date_str = item['created_at__date'].strftime('%Y-%m-%d')
-        method = item['payment_method'] or 'Unknown'
+        method = item['payment_method'] or 'Other'
         amount = item['total_amount'] or Decimal('0.00')
-        count = item['transaction_count'] or 0
         
-        result[date_str][method]['amount'] = amount
-        result[date_str][method]['count'] = count
-        daily_totals[date_str]['amount'] += amount
-        daily_totals[date_str]['count'] += count
+        result[date_str]['date'] = date_str
+        if method in result[date_str]:
+            result[date_str][method] = amount
+        else:
+            result[date_str]['Other'] += amount
+        result[date_str]['total'] += amount
     
-    return {
-        'by_method': dict(result),
-        'daily_totals': dict(daily_totals)
-    }
+    return dict(result)
 
 
 def get_summary_statistics():

@@ -110,6 +110,11 @@ LOGOUT_REDIRECT_URL = '/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Stripe Configuration
+# These keys need to be set as environment variables on PythonAnywhere
+# From PythonAnywhere Dashboard -> Files -> Open Bash Console:
+# echo 'export STRIPE_PUBLISHABLE_KEY="pk_test_51S4duR..."' >> ~/.bashrc
+# echo 'export STRIPE_SECRET_KEY="sk_test_51S4duR..."' >> ~/.bashrc
+# source ~/.bashrc
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')

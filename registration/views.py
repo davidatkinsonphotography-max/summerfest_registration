@@ -131,7 +131,18 @@ def dashboard(request):
     """Smart dashboard that routes users to appropriate interface based on their role"""
     user = request.user
     
-    # Check if user is admin or staff - redirect to admin dashboard
+    # Check if user has parent profile first - show parent dashboard
+    try:
+        parent_profile = request.user.parentprofile
+        children = parent_profile.children.all()
+        return render(request, 'registration/dashboard.html', {
+            'parent_profile': parent_profile,
+            'children': children
+        })
+    except ParentProfile.DoesNotExist:
+        pass
+    
+    # If no parent profile, check if user is admin or staff - redirect to admin dashboard
     if user.is_staff:
         return redirect('teacher_dashboard')
     
@@ -139,19 +150,9 @@ def dashboard(request):
     if hasattr(user, 'teacherprofile'):
         return redirect('teacher_dashboard')
     
-    # Check if user has parent profile - show parent dashboard
-    try:
-        parent_profile = request.user.parentprofile
-    except ParentProfile.DoesNotExist:
-        # Only redirect to parent registration if user is not staff/teacher
-        messages.error(request, 'Please complete your registration first.')
-        return redirect('parent_register')
-    
-    children = parent_profile.children.all()
-    return render(request, 'registration/dashboard.html', {
-        'parent_profile': parent_profile,
-        'children': children
-    })
+    # User has no profiles - redirect to registration
+    messages.error(request, 'Please complete your registration first.')
+    return redirect('parent_register')
 
 
 @login_required
@@ -624,6 +625,12 @@ def manual_sign_in(request):
                     children = children_with_attendance
                 # Keep form data for the template
                 form = ManualSignInForm(initial={'search_query': form.cleaned_data['search_query']})
+            else:
+                # Form is invalid for lookup
+                form = ManualSignInForm(request.POST)
+                parent_profile = None
+                children = None
+                search_info = None
         
         elif 'sign_in' in request.POST:
             # Child sign-in processing
@@ -727,6 +734,12 @@ def manual_sign_in(request):
                 parent_profile = None
                 children = None
                 search_info = None
+        else:
+            # Unknown POST action
+            form = ManualSignInForm()
+            parent_profile = None
+            children = None
+            search_info = None
     else:
         form = ManualSignInForm()
     

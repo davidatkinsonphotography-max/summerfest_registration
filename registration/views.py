@@ -367,10 +367,20 @@ def teacher_dashboard(request):
     children_data = []
     for child in children:
         attendance = attendance_today.filter(child=child).first()
+        
+        # Get payment account balance
+        balance = Decimal('0.00')
+        try:
+            if hasattr(child.parent, 'payment_account'):
+                balance = child.parent.payment_account.balance
+        except Exception:
+            balance = Decimal('0.00')
+        
         children_data.append({
             'child': child,
             'attendance': attendance,
-            'is_present': attendance is not None and attendance.time_out is None
+            'is_present': attendance is not None and attendance.time_out is None,
+            'balance': balance
         })
     
     return render(request, 'registration/teacher_dashboard.html', {

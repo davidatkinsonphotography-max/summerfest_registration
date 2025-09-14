@@ -718,9 +718,15 @@ def manual_sign_in(request):
                 else:
                     messages.error(request, "Invalid search query.")
                     form = ManualSignInForm()
+                    parent_profile = None
+                    children = None
+                    search_info = None
             else:
                 messages.error(request, "Please select at least one child to sign in.")
                 form = ManualSignInForm()
+                parent_profile = None
+                children = None
+                search_info = None
     else:
         form = ManualSignInForm()
     

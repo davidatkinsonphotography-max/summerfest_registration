@@ -160,7 +160,7 @@ class Child(models.Model):
     medical_allergy_details = models.TextField(blank=True)
     
     # Photo Consent (Field 26)
-    photo_consent = models.BooleanField(default=False)
+    photo_consent = models.BooleanField(default=True)
     
     # QR Code for attendance
     qr_code_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)

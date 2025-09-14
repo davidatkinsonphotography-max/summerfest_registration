@@ -334,8 +334,9 @@ def attendance_scan(request):
 @user_passes_test(is_staff_or_teacher)
 def teacher_dashboard(request):
     """Teacher dashboard for class management"""
-    # Get class filter from query parameter
+    # Get class filter and sort parameter from query parameters
     selected_class = request.GET.get('class', '')
+    sort_by = request.GET.get('sort', 'first_name')  # Default to first name
     
     # Get teacher's assigned classes or show all if staff
     if request.user.is_staff:
@@ -358,6 +359,12 @@ def teacher_dashboard(request):
     # Apply class filter if specified
     if selected_class and selected_class in ['creche', 'tackers', 'minis', 'nitro', '56ers']:
         children = children.filter(child_class=selected_class)
+    
+    # Apply sorting
+    if sort_by == 'last_name':
+        children = children.order_by('last_name', 'first_name')
+    else:  # default to first_name
+        children = children.order_by('first_name', 'last_name')
     
     # Get today's attendance
     today = timezone.now().date()
@@ -387,7 +394,8 @@ def teacher_dashboard(request):
         'children_data': children_data,
         'today': today,
         'selected_class': selected_class,
-        'teacher_classes': teacher_classes
+        'teacher_classes': teacher_classes,
+        'sort_by': sort_by
     })
 
 

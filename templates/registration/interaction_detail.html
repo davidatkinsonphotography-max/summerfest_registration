@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}Conversation Details - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="bi bi-chat-dots"></i> Conversation Details
+            </h2>
+            <p class="text-muted mb-0">
+                Recorded {{ interaction.created_at|date:"F j, Y \a\t g:i A" }} by {{ interaction.welcomer_profile.user.get_full_name }}
+            </p>
+        </div>
+        <div>
+            {% if user.is_staff or user == interaction.welcomer_profile.user %}
+                <a href="{% url 'edit_interaction' interaction.id %}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Edit Conversation
+                </a>
+            {% endif %}
+            <a href="{% url 'interaction_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Person Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-circle"></i> Person Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">
+                                {% if interaction.parent_profile %}
+                                    {{ interaction.parent_profile.user.first_name }} {{ interaction.parent_profile.user.last_name }}
+                                    <span class="badge bg-success ms-2">
+                                        <i class="bi bi-database-check"></i> In System
+                                    </span>
+                                {% else %}
+                                    {{ interaction.manual_first_name }} {{ interaction.manual_last_name|default:"" }}
+                                    <span class="badge bg-warning text-dark ms-2">
+                                        <i class="bi bi-person-plus"></i> Manual Entry
+                                    </span>
+                                {% endif %}
+                            </h5>
+                            
+                            <!-- Contact Information -->
+                            <div class="mb-3">
+                                {% if interaction.parent_profile %}
+                                    {% if interaction.parent_profile.phone_number %}
+                                        <p class="mb-2">
+                                            <i class="bi bi-telephone text-muted me-2"></i>
+                                            <a href="tel:{{ interaction.parent_profile.phone_number }}" class="text-decoration-none">
+                                                {{ interaction.parent_profile.phone_number }}
+                                            </a>
+                                        </p>
+                                    {% endif %}
+                                    {% if interaction.parent_profile.user.email %}
+                                        <p class="mb-2">
+                                            <i class="bi bi-envelope text-muted me-2"></i>
+                                            <a href="mailto:{{ interaction.parent_profile.user.email }}" class="text-decoration-none">
+                                                {{ interaction.parent_profile.user.email }}
+                                            </a>
+                                        </p>
+                                    {% endif %}
+                                    {% if interaction.parent_profile.address %}
+                                        <p class="mb-2">
+                                            <i class="bi bi-geo-alt text-muted me-2"></i>
+                                            {{ interaction.parent_profile.address }}
+                                        </p>
+                                    {% endif %}
+                                {% else %}
+                                    {% if interaction.manual_phone %}
+                                        <p class="mb-2">
+                                            <i class="bi bi-telephone text-muted me-2"></i>
+                                            <a href="tel:{{ interaction.manual_phone }}" class="text-decoration-none">
+                                                {{ interaction.manual_phone }}
+                                            </a>
+                                        </p>
+                                    {% endif %}
+                                    {% if interaction.manual_email %}
+                                        <p class="mb-2">
+                                            <i class="bi bi-envelope text-muted me-2"></i>
+                                            <a href="mailto:{{ interaction.manual_email }}" class="text-decoration-none">
+                                                {{ interaction.manual_email }}
+                                            </a>
+                                        </p>
+                                    {% endif %}
+                                    {% if interaction.manual_address %}
+                                        <p class="mb-2">
+                                            <i class="bi bi-geo-alt text-muted me-2"></i>
+                                            {{ interaction.manual_address }}
+                                        </p>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <!-- Children Information -->
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">
+                                    <i class="bi bi-people me-2"></i>Children
+                                </h6>
+                                {% if interaction.parent_profile and interaction.parent_profile.children.exists %}
+                                    {% for child in interaction.parent_profile.children.all %}
+                                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                            <span>{{ child.first_name }} {{ child.last_name }}</span>
+                                            <span class="badge bg-primary">{{ child.class_name }}</span>
+                                        </div>
+                                    {% endfor %}
+                                {% elif interaction.manual_children_info %}
+                                    <div class="p-2 bg-light rounded">
+                                        {{ interaction.manual_children_info }}
+                                    </div>
+                                {% else %}
+                                    <div class="text-muted fst-italic">
+                                        No children information recorded
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conversation Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="bi bi-calendar-event"></i> Conversation Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted mb-2">Interaction Day</h6>
+                            {% if interaction.interaction_day %}
+                                <span class="badge bg-primary fs-6 px-3 py-2">
+                                    {{ interaction.interaction_day }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted fst-italic">Not specified</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted mb-2">Church Attendance</h6>
+                            {% if interaction.attends_church == True %}
+                                <span class="badge bg-success fs-6 px-3 py-2">
+                                    <i class="bi bi-check-circle me-1"></i>Attends Church
+                                </span>
+                                {% if interaction.current_church %}
+                                    <div class="mt-2 small">
+                                        <strong>Current Church:</strong> {{ interaction.current_church }}
+                                    </div>
+                                {% endif %}
+                            {% elif interaction.attends_church == False %}
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                                    <i class="bi bi-x-circle me-1"></i>Doesn't Attend Church
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary fs-6 px-3 py-2">
+                                    <i class="bi bi-question-circle me-1"></i>Unknown
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conversation Questions -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-question-circle"></i> Conversation Topics
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Faith Status -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-heart me-2"></i>Faith Journey
+                        </h6>
+                        {% if interaction.faith_status %}
+                            <div class="p-3 bg-light rounded">
+                                {{ interaction.faith_status|linebreaks }}
+                            </div>
+                        {% else %}
+                            <div class="text-muted fst-italic">
+                                Not discussed
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Lighthouse Members -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-people me-2"></i>Knows Lighthouse Church Members
+                        </h6>
+                        {% if interaction.knows_lighthouse_members %}
+                            <div class="p-3 bg-light rounded">
+                                {{ interaction.knows_lighthouse_members|linebreaks }}
+                            </div>
+                        {% else %}
+                            <div class="text-muted fst-italic">
+                                Not discussed
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Previous Interactions -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-clock-history me-2"></i>Previous Lighthouse Interactions
+                        </h6>
+                        {% if interaction.previous_lighthouse_interaction %}
+                            <div class="p-3 bg-light rounded">
+                                {{ interaction.previous_lighthouse_interaction|linebreaks }}
+                            </div>
+                        {% else %}
+                            <div class="text-muted fst-italic">
+                                Not discussed
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Future Events Interest -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-calendar-plus me-2"></i>Interest in Future Events
+                        </h6>
+                        {% if interaction.interested_in_future_events %}
+                            <div class="p-3 bg-light rounded">
+                                {{ interaction.interested_in_future_events|linebreaks }}
+                            </div>
+                        {% else %}
+                            <div class="text-muted fst-italic">
+                                Not discussed
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Additional Notes -->
+                    <div class="mb-0">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-journal-text me-2"></i>Additional Notes
+                        </h6>
+                        {% if interaction.additional_notes %}
+                            <div class="p-3 bg-light rounded">
+                                {{ interaction.additional_notes|linebreaks }}
+                            </div>
+                        {% else %}
+                            <div class="text-muted fst-italic">
+                                No additional notes
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Conversation Meta -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Conversation Info
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Welcomer</small>
+                        <strong>{{ interaction.welcomer_profile.user.get_full_name }}</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Date & Time</small>
+                        <strong>{{ interaction.created_at|date:"F j, Y" }}</strong><br>
+                        <span class="text-muted">{{ interaction.created_at|date:"g:i A" }}</span>
+                    </div>
+                    
+                    {% if interaction.updated_at != interaction.created_at %}
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Last Updated</small>
+                            <strong>{{ interaction.updated_at|date:"F j, Y" }}</strong><br>
+                            <span class="text-muted">{{ interaction.updated_at|date:"g:i A" }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-0">
+                        <small class="text-muted d-block">Conversation ID</small>
+                        <code>#{{ interaction.id }}</code>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    {% if interaction.parent_profile %}
+                        {% if interaction.parent_profile.phone_number %}
+                            <a href="tel:{{ interaction.parent_profile.phone_number }}" class="btn btn-outline-primary">
+                                <i class="bi bi-telephone"></i> Call {{ interaction.parent_profile.user.first_name }}
+                            </a>
+                        {% endif %}
+                        {% if interaction.parent_profile.user.email %}
+                            <a href="mailto:{{ interaction.parent_profile.user.email }}" class="btn btn-outline-primary">
+                                <i class="bi bi-envelope"></i> Email {{ interaction.parent_profile.user.first_name }}
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'parent_detail' interaction.parent_profile.id %}" class="btn btn-outline-info">
+                            <i class="bi bi-person-lines-fill"></i> View Parent Profile
+                        </a>
+                    {% else %}
+                        {% if interaction.manual_phone %}
+                            <a href="tel:{{ interaction.manual_phone }}" class="btn btn-outline-primary">
+                                <i class="bi bi-telephone"></i> Call {{ interaction.manual_first_name }}
+                            </a>
+                        {% endif %}
+                        {% if interaction.manual_email %}
+                            <a href="mailto:{{ interaction.manual_email }}" class="btn btn-outline-primary">
+                                <i class="bi bi-envelope"></i> Email {{ interaction.manual_first_name }}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <a href="{% url 'add_interaction' %}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Record New Conversation
+                    </a>
+                    
+                    {% if user.is_staff or user == interaction.welcomer_profile.user %}
+                        <a href="{% url 'edit_interaction' interaction.id %}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Edit This Conversation
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Related Conversations -->
+            {% if related_interactions %}
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-chat-square-dots"></i> Other Conversations
+                        </h5>
+                        <small>With the same person</small>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for related in related_interactions %}
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <div>
+                                    <small class="text-muted">{{ related.created_at|date:"M j, Y" }}</small><br>
+                                    <small>by {{ related.welcomer_profile.user.first_name }}</small>
+                                </div>
+                                <div>
+                                    {% if related.interaction_day %}
+                                        <span class="badge bg-primary">{{ related.interaction_day }}</span>
+                                    {% endif %}
+                                    <a href="{% url 'interaction_detail' related.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any interactive features here if needed
+    // For example, copy to clipboard functionality for phone numbers or emails
+    
+    // Click to select conversation ID
+    const conversationId = document.querySelector('code');
+    if (conversationId) {
+        conversationId.style.cursor = 'pointer';
+        conversationId.title = 'Click to select';
+        conversationId.addEventListener('click', function() {
+            // Select the text
+            const range = document.createRange();
+            range.selectNodeContents(this);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // Try to copy to clipboard
+            try {
+                document.execCommand('copy');
+                // Brief feedback
+                const original = this.textContent;
+                this.textContent = 'Copied!';
+                setTimeout(() => {
+                    this.textContent = original;
+                }, 1000);
+            } catch (err) {
+                console.log('Copy failed');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

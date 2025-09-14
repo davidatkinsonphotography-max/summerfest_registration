@@ -11,6 +11,7 @@ from .welcomer_views import (
     welcomer_dashboard, add_interaction, interaction_list, interaction_detail,
     edit_interaction, get_parent_info, get_child_parent_info
 )
+from .reports_views import reports_dashboard
 from django.http import HttpResponse
 
 def home(request):
@@ -84,6 +85,9 @@ urlpatterns = [
     path('welcomer/interaction/<int:interaction_id>/edit/', edit_interaction, name='edit_interaction'),
     path('welcomer/api/parent-info/', get_parent_info, name='get_parent_info'),
     path('welcomer/api/child-parent-info/', get_child_parent_info, name='get_child_parent_info'),
+    
+    # Reports system
+    path('reports/', reports_dashboard, name='reports_dashboard'),
 ]
 
 

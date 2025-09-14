@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+
+{% block title %}Summerfest Reports Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header with Date Filter -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-bar-chart-line"></i> Reports Dashboard</h2>
+            <p class="text-muted mb-0">Comprehensive analytics for Summerfest {{ start_date.year }}</p>
+        </div>
+        <div>
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label for="start_date" class="form-label mb-0 small">From:</label>
+                <input type="date" class="form-control form-control-sm" id="start_date" name="start_date" 
+                       value="{{ start_date|date:'Y-m-d' }}" style="width: 150px;">
+                
+                <label for="end_date" class="form-label mb-0 small">To:</label>
+                <input type="date" class="form-control form-control-sm" id="end_date" name="end_date" 
+                       value="{{ end_date|date:'Y-m-d' }}" style="width: 150px;">
+                
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-center border-primary">
+                <div class="card-body py-3">
+                    <i class="bi bi-people-fill text-primary" style="font-size: 1.8rem;"></i>
+                    <h3 class="mt-2 mb-1">{{ summary_stats.total_families }}</h3>
+                    <p class="text-muted mb-0 small">Total Families</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-center border-info">
+                <div class="card-body py-3">
+                    <i class="bi bi-person-hearts text-info" style="font-size: 1.8rem;"></i>
+                    <h3 class="mt-2 mb-1">{{ summary_stats.total_children }}</h3>
+                    <p class="text-muted mb-0 small">Total Children</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-center border-success">
+                <div class="card-body py-3">
+                    <i class="bi bi-calendar-check text-success" style="font-size: 1.8rem;"></i>
+                    <h3 class="mt-2 mb-1">{{ summary_stats.total_attendance_records }}</h3>
+                    <p class="text-muted mb-0 small">Total Attendance</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-center border-warning">
+                <div class="card-body py-3">
+                    <i class="bi bi-currency-dollar text-warning" style="font-size: 1.8rem;"></i>
+                    <h3 class="mt-2 mb-1">${{ summary_stats.total_revenue }}</h3>
+                    <p class="text-muted mb-0 small">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-center border-secondary">
+                <div class="card-body py-3">
+                    <i class="bi bi-chat-dots text-secondary" style="font-size: 1.8rem;"></i>
+                    <h3 class="mt-2 mb-1">{{ summary_stats.total_conversations }}</h3>
+                    <p class="text-muted mb-0 small">Conversations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-center border-dark">
+                <div class="card-body py-3">
+                    <i class="bi bi-calendar3 text-dark" style="font-size: 1.8rem;"></i>
+                    <h3 class="mt-2 mb-1">{{ summary_stats.unique_attendance_days }}</h3>
+                    <p class="text-muted mb-0 small">Active Days</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Class Enrollment Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Current Class Enrollment</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for class_info in class_enrollment %}
+                            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                                <div class="text-center p-3 border rounded">
+                                    <h4 class="text-primary">{{ class_info.enrolled }}</h4>
+                                    <p class="mb-0 small">{{ class_info.class_name }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daily Registration Trends -->
+    {% if daily_registrations %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Daily Registrations ({{ date_range_days }} days)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Parents</th>
+                                    <th>Children</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for date, data in daily_registrations.items %}
+                                <tr>
+                                    <td>{{ date }}</td>
+                                    <td><span class="badge bg-primary">{{ data.parents }}</span></td>
+                                    <td><span class="badge bg-info">{{ data.children }}</span></td>
+                                    <td><strong>{{ data.total }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Children Registered by Class by Day -->
+    {% if children_by_class_day %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-plus"></i> Children Registered by Class by Day</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Creche</th>
+                                    <th>Little Tackers</th>
+                                    <th>Minis</th>
+                                    <th>Nitro</th>
+                                    <th>56ers</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for date, classes in children_by_class_day.items %}
+                                <tr>
+                                    <td>{{ date }}</td>
+                                    <td>{{ classes.Creche|default:0 }}</td>
+                                    <td>{{ classes.Little Tackers|default:0 }}</td>
+                                    <td>{{ classes.Minis|default:0 }}</td>
+                                    <td>{{ classes.Nitro|default:0 }}</td>
+                                    <td>{{ classes.56ers|default:0 }}</td>
+                                    <td><strong>{{ classes.Creche|default:0|add:classes.Little Tackers|default:0|add:classes.Minis|default:0|add:classes.Nitro|default:0|add:classes.56ers|default:0 }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Attendance by Class by Day -->
+    {% if attendance_by_class_day %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Children Checked In by Class by Day</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Creche</th>
+                                    <th>Little Tackers</th>
+                                    <th>Minis</th>
+                                    <th>Nitro</th>
+                                    <th>56ers</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for date, classes in attendance_by_class_day.items %}
+                                <tr>
+                                    <td>{{ date }}</td>
+                                    <td>{{ classes.Creche|default:0 }}</td>
+                                    <td>{{ classes.Little Tackers|default:0 }}</td>
+                                    <td>{{ classes.Minis|default:0 }}</td>
+                                    <td>{{ classes.Nitro|default:0 }}</td>
+                                    <td>{{ classes.56ers|default:0 }}</td>
+                                    <td><strong>{{ classes.Creche|default:0|add:classes.Little Tackers|default:0|add:classes.Minis|default:0|add:classes.Nitro|default:0|add:classes.56ers|default:0 }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- How Parents Heard About Summerfest -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-megaphone"></i> How Parents Heard About Summerfest</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in heard_about_stats %}
+                                <tr>
+                                    <td>{{ item.method }}</td>
+                                    <td><span class="badge bg-primary">{{ item.count }}</span></td>
+                                    <td>{{ item.percentage }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Church Attendance Statistics -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-building"></i> Church Attendance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Overall Attendance</h6>
+                        <div class="d-flex justify-content-between">
+                            <span>Attends Church:</span>
+                            <span class="badge bg-success">{{ church_attendance_stats.breakdown.attends_church }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Doesn't Attend:</span>
+                            <span class="badge bg-warning">{{ church_attendance_stats.breakdown.no_church }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Total:</strong></span>
+                            <span class="badge bg-primary">{{ church_attendance_stats.breakdown.total }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if church_attendance_stats.churches %}
+                    <div>
+                        <h6>Specific Churches</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <tbody>
+                                    {% for church in church_attendance_stats.churches %}
+                                    <tr>
+                                        <td>{{ church.which_church }}</td>
+                                        <td><span class="badge bg-info">{{ church.count }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daily Income Report -->
+    {% if daily_income.daily_totals %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Daily Income Report</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Credit Card</th>
+                                    <th>Cash</th>
+                                    <th>EFTPOS</th>
+                                    <th>Bank Transfer</th>
+                                    <th>Other</th>
+                                    <th>Daily Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for date, totals in daily_income.daily_totals.items %}
+                                <tr>
+                                    <td>{{ date }}</td>
+                                    {% with methods=daily_income.by_method|get_item:date %}
+                                    <td>${{ methods.Credit Card.amount|default:"0.00" }}</td>
+                                    <td>${{ methods.Cash.amount|default:"0.00" }}</td>
+                                    <td>${{ methods.EFTPOS.amount|default:"0.00" }}</td>
+                                    <td>${{ methods.Bank Transfer.amount|default:"0.00" }}</td>
+                                    <td>${{ methods.Other.amount|default:"0.00" }}</td>
+                                    {% endwith %}
+                                    <td><strong>${{ totals.amount }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'export_all_data' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-download"></i> Export All Data
+                        </a>
+                        <a href="{% url 'export_parent_conversations' %}" class="btn btn-outline-info">
+                            <i class="bi bi-chat-dots"></i> Export Conversations
+                        </a>
+                        <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-success">
+                            <i class="bi bi-people"></i> Teacher Dashboard
+                        </a>
+                        <a href="{% url 'welcomer_dashboard' %}" class="btn btn-outline-warning">
+                            <i class="bi bi-heart"></i> Welcomer Dashboard
+                        </a>
+                        <a href="{% url 'export_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Export Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table th {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.table td {
+    font-size: 0.875rem;
+}
+.card-header h5 {
+    font-size: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when date changes
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    if (startDate && endDate) {
+        startDate.addEventListener('change', function() {
+            // Optional: Auto-submit on date change
+            // this.form.submit();
+        });
+        
+        endDate.addEventListener('change', function() {
+            // Optional: Auto-submit on date change
+            // this.form.submit();
+        });
+    }
+});
+</script>
+{% endblock %}

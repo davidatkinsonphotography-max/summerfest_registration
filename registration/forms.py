@@ -508,7 +508,7 @@ class ParentInteractionForm(forms.ModelForm):
             'search_method', 'parent_profile', 'child_for_parent_lookup',
             'manual_first_name', 'manual_last_name', 'manual_phone', 'manual_email', 
             'manual_address', 'manual_children_info',
-            'interaction_day', 'attends_church', 'current_church', 'faith_status',
+            'conversation_team_member', 'interaction_day', 'attends_church', 'current_church', 'faith_status',
             'knows_lighthouse_members', 'previous_lighthouse_interaction',
             'interested_in_future_events', 'additional_notes'
         ]
@@ -520,6 +520,7 @@ class ParentInteractionForm(forms.ModelForm):
             'manual_email': forms.EmailInput(attrs={'class': 'form-control'}),
             'manual_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'manual_children_info': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'conversation_team_member': forms.TextInput(attrs={'class': 'form-control'}),
             'current_church': forms.TextInput(attrs={'class': 'form-control'}),
             'faith_status': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'knows_lighthouse_members': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
@@ -534,6 +535,7 @@ class ParentInteractionForm(forms.ModelForm):
             'manual_email': 'Email Address',
             'manual_address': 'Address',
             'manual_children_info': 'Children Attending & Classes',
+            'conversation_team_member': 'Team Member Who Had Conversation',
             'interaction_day': 'Which day did this conversation take place?',
             'current_church': 'Which church do they attend?',
             'faith_status': 'Current faith status',

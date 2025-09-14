@@ -179,7 +179,12 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <small>{{ interaction.welcomer.user.get_full_name|default:interaction.welcomer.user.username }}</small>
+                                            {% if interaction.conversation_team_member %}
+                                                <small>{{ interaction.conversation_team_member }}</small>
+                                                <br><small class="text-muted">recorded by {{ interaction.welcomer.user.first_name }}</small>
+                                            {% else %}
+                                                <small>{{ interaction.welcomer.user.get_full_name|default:interaction.welcomer.user.username }}</small>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             {% if interaction.faith_status %}

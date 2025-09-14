@@ -5,12 +5,13 @@ from .payment_views import (
     payment_dashboard, add_funds, payment_success, payment_cancel, 
     manual_payment, payment_lookup, stripe_webhook
 )
-from .export_views_fixed import export_dashboard, export_all_data_csv, export_attendance_detailed_csv, export_payments_detailed_csv
+from .export_views_fixed import export_dashboard, export_all_data_csv, export_attendance_detailed_csv, export_payments_detailed_csv, export_parent_conversations_csv
 from .pass_views import purchase_pass, pass_purchase_success, pass_purchase_cancel, my_passes
 from .welcomer_views import (
     welcomer_dashboard, add_interaction, interaction_list, interaction_detail,
     edit_interaction, get_parent_info, get_child_parent_info
 )
+from .reports_views import reports_dashboard
 from django.http import HttpResponse
 
 def home(request):
@@ -68,6 +69,7 @@ urlpatterns = [
     path('export/all/', export_all_data_csv, name='export_all_data'),
     path('export/attendance/', export_attendance_detailed_csv, name='export_attendance_detailed'),
     path('export/payments/', export_payments_detailed_csv, name='export_payments_detailed'),
+    path('export/conversations/', export_parent_conversations_csv, name='export_parent_conversations'),
     
     # Pass purchase system
     path('passes/purchase/', purchase_pass, name='purchase_pass'),
@@ -83,6 +85,9 @@ urlpatterns = [
     path('welcomer/interaction/<int:interaction_id>/edit/', edit_interaction, name='edit_interaction'),
     path('welcomer/api/parent-info/', get_parent_info, name='get_parent_info'),
     path('welcomer/api/child-parent-info/', get_child_parent_info, name='get_child_parent_info'),
+    
+    # Reports system
+    path('reports/', reports_dashboard, name='reports_dashboard'),
 ]
 
 

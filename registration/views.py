@@ -556,6 +556,7 @@ def site_map(request):
         ],
         'Admin/Superuser': [
             ('Django Admin', '/admin/', 'Full administrative interface'),
+            ('Reports Dashboard', '/reports/', 'Comprehensive analytics and reports'),
             ('Data Export Dashboard', '/export/', 'Export all registration data to CSV'),
             ('Download Complete Report', '/export/all/', 'Download comprehensive CSV report'),
             ('Download Parent Conversations', '/export/conversations/', 'Export all welcomer parent conversations'),

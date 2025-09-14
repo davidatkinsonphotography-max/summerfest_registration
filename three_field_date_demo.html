@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Field Date Widget Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Three Field Date Widget CSS */
+        .three-field-date-widget {
+            margin-bottom: 0.5rem;
+        }
+
+        .three-field-date-widget input[type="text"] {
+            font-family: monospace;
+            font-weight: 500;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .three-field-date-widget input[type="text"]:focus {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .three-field-date-widget input[type="text"].is-invalid {
+            border-color: #dc3545;
+        }
+
+        .three-field-date-widget input[type="text"].is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+        }
+
+        .three-field-date-widget .invalid-feedback {
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #dc3545;
+        }
+
+        /* Mobile-specific improvements */
+        @media (max-width: 768px) {
+            .three-field-date-widget input[type="text"] {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 0.5rem 0.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0">Three-Field Date Widget Demo</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="demo-form">
+                            <div class="mb-3">
+                                <label class="form-label">Date of Birth *</label>
+                                <div class="three-field-date-widget" data-field-name="date_of_birth">
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <input type="text" 
+                                                   id="date_of_birth_day" 
+                                                   name="date_of_birth_day"
+                                                   class="form-control text-center three-field-date-day" 
+                                                   maxlength="2" 
+                                                   placeholder="DD" 
+                                                   style="width: 60px;"
+                                                   inputmode="numeric"
+                                                   pattern="[0-9]*">
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            <span class="text-muted">/</span>
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            <input type="text" 
+                                                   id="date_of_birth_month" 
+                                                   name="date_of_birth_month"
+                                                   class="form-control text-center three-field-date-month" 
+                                                   maxlength="2" 
+                                                   placeholder="MM" 
+                                                   style="width: 60px;"
+                                                   inputmode="numeric"
+                                                   pattern="[0-9]*">
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            <span class="text-muted">/</span>
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            <input type="text" 
+                                                   id="date_of_birth_year" 
+                                                   name="date_of_birth_year"
+                                                   class="form-control text-center three-field-date-year" 
+                                                   maxlength="4" 
+                                                   placeholder="YYYY" 
+                                                   style="width: 80px;"
+                                                   inputmode="numeric"
+                                                   pattern="[0-9]*">
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="date_of_birth" name="date_of_birth">
+                                    <div id="date_of_birth_error" class="invalid-feedback" style="display: none;"></div>
+                                </div>
+                                <small class="form-text text-muted">Child must be born after January 1, 2010</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">First Name *</label>
+                                <input type="text" class="form-control" placeholder="Child's first name">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" placeholder="Child's last name">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success">Submit Demo</button>
+                        </form>
+                        
+                        <div class="mt-4">
+                            <h5>Try These Features:</h5>
+                            <ul>
+                                <li><strong>Auto-advance:</strong> Type "15" in day field - cursor jumps to month</li>
+                                <li><strong>Live validation:</strong> Try entering "32/13/2008" - instant error feedback</li>
+                                <li><strong>Paste support:</strong> Copy "15/06/2015" and paste into any field</li>
+                                <li><strong>Numeric keyboard:</strong> On mobile, only numeric keyboard appears</li>
+                                <li><strong>Backspace navigation:</strong> Backspace in empty field goes to previous field</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Three Field Date Widget JavaScript (simplified for demo)
+        document.addEventListener('DOMContentLoaded', function() {
+            const widget = document.querySelector('.three-field-date-widget');
+            const dayField = widget.querySelector('.three-field-date-day');
+            const monthField = widget.querySelector('.three-field-date-month');
+            const yearField = widget.querySelector('.three-field-date-year');
+            const hiddenField = widget.querySelector('input[name="date_of_birth"]');
+            const errorDiv = widget.querySelector('#date_of_birth_error');
+            
+            const fields = [dayField, monthField, yearField];
+            
+            // Auto-advance functionality
+            fields.forEach((field, index) => {
+                field.addEventListener('input', function(e) {
+                    // Only allow numeric input
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    
+                    // Auto-advance when field is full
+                    if (this.value.length === parseInt(this.maxLength) && fields[index + 1]) {
+                        fields[index + 1].focus();
+                    }
+                    
+                    // Run validation on every change
+                    validateDate();
+                });
+                
+                // Handle backspace for better UX
+                field.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                        fields[index - 1].focus();
+                    }
+                });
+                
+                // Handle paste events
+                field.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                    handlePastedDate(pastedText);
+                });
+            });
+            
+            function validateDate() {
+                const day = dayField.value.trim();
+                const month = monthField.value.trim();
+                const year = yearField.value.trim();
+                
+                // Clear previous errors
+                clearErrors();
+                
+                // Only validate when all fields are filled
+                if (!day || !month || year.length < 4) {
+                    hiddenField.value = '';
+                    return false;
+                }
+                
+                // Pad with zeros
+                const paddedDay = day.padStart(2, '0');
+                const paddedMonth = month.padStart(2, '0');
+                
+                // Create date object for validation
+                const testDate = new Date(`${year}-${paddedMonth}-${paddedDay}`);
+                
+                // Check if date is valid
+                const isValidDate = testDate &&
+                    testDate.getFullYear() == year &&
+                    testDate.getMonth() + 1 == parseInt(month) &&
+                    testDate.getDate() == parseInt(day);
+                
+                if (!isValidDate) {
+                    showError('Please enter a valid date of birth');
+                    return false;
+                }
+                
+                // Range validation
+                const minDate = new Date('2010-01-01');
+                const maxDate = new Date();
+                
+                if (testDate < minDate) {
+                    showError('Date of birth cannot be before 1 January 2010');
+                    return false;
+                }
+                
+                if (testDate > maxDate) {
+                    showError('Date of birth cannot be in the future');
+                    return false;
+                }
+                
+                // Success!
+                clearErrors();
+                hiddenField.value = `${year}-${paddedMonth}-${paddedDay}`;
+                return true;
+            }
+            
+            function showError(message) {
+                fields.forEach(field => {
+                    field.style.borderColor = '#dc3545';
+                    field.classList.add('is-invalid');
+                });
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+            
+            function clearErrors() {
+                fields.forEach(field => {
+                    field.style.borderColor = '';
+                    field.classList.remove('is-invalid');
+                });
+                errorDiv.textContent = '';
+                errorDiv.style.display = 'none';
+            }
+            
+            function handlePastedDate(pastedText) {
+                // Try to split by common separators
+                const parts = pastedText.split(/[\/\-\.\s]+/);
+                if (parts.length === 3) {
+                    let day, month, year;
+                    
+                    if (parts[0].length === 4) {
+                        // YYYY-MM-DD format
+                        year = parts[0];
+                        month = parts[1];
+                        day = parts[2];
+                    } else if (parts[2].length === 4) {
+                        // DD/MM/YYYY format
+                        day = parts[0];
+                        month = parts[1];
+                        year = parts[2];
+                    }
+                    
+                    if (day && month && year) {
+                        dayField.value = day;
+                        monthField.value = month;
+                        yearField.value = year;
+                        validateDate();
+                    }
+                }
+            }
+            
+            // Form submission demo
+            document.getElementById('demo-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (validateDate()) {
+                    alert(`Success! Date parsed as: ${hiddenField.value}`);
+                } else {
+                    alert('Please fix the date of birth field first.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

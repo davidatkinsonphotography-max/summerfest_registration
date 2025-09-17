@@ -64,61 +64,55 @@
                             <table class="table table-striped">
                                 <thead>
                                     <tr>
-                                        <th>Child Name</th>
-                                        <th style="width: 140px;">Actions</th>
+                                        <th style="width: 160px;">Child Name</th>
+                                        <th style="width: 100px;">Actions</th>
                                         <th style="width: 100px;">Current Balance</th>
                                         <th style="width: 60px;">Photos</th>
                                         <th>Medical/Dietary</th>
                                         <th style="width: 80px;">Class</th>
                                         <th style="width: 90px;">Status</th>
                                         <th style="width: 80px;">Times</th>
-                                        <th>Parent</th>
-                                        <th>Emergency Contact</th>
+                                        <th style="width: 140px;">Parent</th>
+                                        <th style="width: 140px;">Emergency Contact</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for data in children_data %}
                                         <tr class="child-row" data-class="{{ data.child.child_class }}">
                                             <!-- Child Name Column -->
-                                            <td>
+                                            <td style="width: 160px;">
                                                 <strong>{{ data.child.first_name }} {{ data.child.last_name }}</strong><br>
                                                 <small class="text-muted">DOB: {{ data.child.date_of_birth|date:"M j, Y" }}</small>
                                             </td>
                                             
                                             <!-- Actions Column -->
-                                            <td style="width: 140px;">
-                                                <div class="d-grid gap-1">
+                                            <td style="width: 100px;">
+                                                <div class="d-grid">
                                                     {% if not data.attendance %}
                                                         <!-- Not yet arrived - allow check-in -->
-                                                        <button class="btn btn-success d-flex align-items-center justify-content-center" style="height: 50px; flex-direction: column;" 
+                                                        <button class="btn btn-success d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px;" 
                                                                 onclick="manualCheckIn({{ data.child.id }}, '{{ data.child.first_name }} {{ data.child.last_name }}')">
-                                                            <i class="bi bi-box-arrow-in-right"></i>
-                                                            <small>Check In</small>
+                                                            <i class="bi bi-box-arrow-in-right" style="font-size: 16px;"></i>
+                                                            <span style="margin-top: 4px;">Check In</span>
                                                         </button>
                                                     {% elif data.attendance.status == 'checked_in' %}
                                                         <!-- Checked in - allow to go to class -->
-                                                        <button class="btn btn-primary d-flex align-items-center justify-content-center" style="height: 50px; flex-direction: column;" 
+                                                        <button class="btn btn-primary d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px;" 
                                                                 onclick="changeStatus({{ data.child.id }}, 'in_class', '{{ data.child.first_name }} {{ data.child.last_name }}')">
-                                                            <i class="bi bi-book"></i>
-                                                            <small>In Class</small>
+                                                            <i class="bi bi-book" style="font-size: 16px;"></i>
+                                                            <span style="margin-top: 4px;">In Class</span>
                                                         </button>
                                                     {% elif data.attendance.status == 'in_class' %}
                                                         <!-- In class - allow pickup -->
-                                                        <button class="btn btn-warning d-flex align-items-center justify-content-center" style="height: 50px; flex-direction: column;" 
+                                                        <button class="btn btn-warning d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px;" 
                                                                 onclick="changeStatus({{ data.child.id }}, 'picked_up', '{{ data.child.first_name }} {{ data.child.last_name }}')">
-                                                            <i class="bi bi-person-check"></i>
-                                                            <small>Picked Up</small>
+                                                            <i class="bi bi-person-check" style="font-size: 16px;"></i>
+                                                            <span style="margin-top: 4px;">Picked Up</span>
                                                         </button>
                                                     {% elif data.attendance.status == 'picked_up' %}
                                                         <!-- Already picked up -->
-                                                        <span class="border border-dark text-dark d-flex align-items-center justify-content-center" style="height: 50px; border-radius: 0.375rem;">Complete</span>
+                                                        <span class="border border-dark text-dark d-flex align-items-center justify-content-center" style="height: 70px; border-radius: 0.375rem; font-weight: bold;">Complete</span>
                                                     {% endif %}
-                                                    
-                                                    <!-- QR Code button without icon -->
-                                                    <a href="{% url 'child_qr_code' data.child.id %}" class="btn btn-outline-info btn-sm mt-1" 
-                                                       title="View QR Code" target="_blank">
-                                                        QR
-                                                    </a>
                                                 </div>
                                             </td>
                                             
@@ -186,16 +180,16 @@
                                                     <small class="text-muted">-</small>
                                                 {% endif %}
                                             </td>
-                                            
+                            
                                             <!-- Parent Column -->
-                                            <td>
+                                            <td style="width: 140px;">
                                                 <strong>{{ data.child.parent.first_name }} {{ data.child.parent.last_name }}</strong><br>
                                                 <small class="text-muted">{{ data.child.parent.phone_number }}</small><br>
                                                 <small class="text-muted">{{ data.child.parent.email }}</small>
                                             </td>
                                             
                                             <!-- Emergency Contact Column -->
-                                            <td>
+                                            <td style="width: 140px;">
                                                 <strong>{{ data.child.parent.emergency_contact_name }}</strong><br>
                                                 <small>{{ data.child.parent.emergency_contact_phone }}</small><br>
                                                 <small class="text-muted">{{ data.child.parent.get_emergency_contact_relationship_display }}</small>

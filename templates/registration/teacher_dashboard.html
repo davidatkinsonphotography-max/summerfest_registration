@@ -65,15 +65,15 @@
                                 <thead>
                                     <tr>
                                         <th>Child Name</th>
-                                        <th>Parent</th>
-                                        <th>Emergency Contact</th>
-                                        <th style="width: 80px;">Class</th>
+                                        <th style="width: 140px;">Actions</th>
+                                        <th style="width: 100px;">Current Balance</th>
+                                        <th style="width: 60px;">Photos</th>
                                         <th>Medical/Dietary</th>
-                                        <th style="width: 60px;">Photo</th>
+                                        <th style="width: 80px;">Class</th>
                                         <th style="width: 90px;">Status</th>
                                         <th style="width: 80px;">Times</th>
-                                        <th style="width: 100px;">Current Balance</th>
-                                        <th style="width: 140px;">Actions</th>
+                                        <th>Parent</th>
+                                        <th>Emergency Contact</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -84,75 +84,7 @@
                                                 <strong>{{ data.child.first_name }} {{ data.child.last_name }}</strong><br>
                                                 <small class="text-muted">DOB: {{ data.child.date_of_birth|date:"M j, Y" }}</small>
                                             </td>
-                                            <!-- Parent Column -->
-                                            <td>
-                                                <strong>{{ data.child.parent.first_name }} {{ data.child.parent.last_name }}</strong><br>
-                                                <small class="text-muted">{{ data.child.parent.phone_number }}</small>
-                                            </td>
-                                            <!-- Emergency Contact Column -->
-                                            <td>
-                                                <strong>{{ data.child.parent.emergency_contact_name }}</strong><br>
-                                                <small>{{ data.child.parent.emergency_contact_phone }}</small>
-                                            </td>
-                                            <!-- Class Column -->
-                                            <td style="width: 80px;">
-                                                <small style="line-height: 1.2;">{{ data.child.get_class_short_name }}</small>
-                                            </td>
-                                            <!-- Medical/Dietary Column -->
-                                            <td>
-                                                {% if data.child.has_dietary_needs %}
-                                                    <div class="alert alert-warning py-1 mb-1">
-                                                        <small><strong>Dietary:</strong> {{ data.child.dietary_needs_detail }}</small>
-                                                    </div>
-                                                {% endif %}
-                                                {% if data.child.has_medical_needs %}
-                                                    <div class="alert alert-danger py-1 mb-1">
-                                                        <small><strong>Medical:</strong> {{ data.child.medical_allergy_details }}</small>
-                                                    </div>
-                                                {% endif %}
-                                                {% if not data.child.has_dietary_needs and not data.child.has_medical_needs %}
-                                                    <small class="text-muted">None reported</small>
-                                                {% endif %}
-                                            </td>
-                                            <!-- Photo Consent Column -->
-                                            <td style="width: 60px; text-align: center;">
-                                                {% if data.child.photo_consent %}
-                                                    <span class="badge bg-success" title="Photo consent given"><i class="bi bi-camera"></i></span>
-                                                {% else %}
-                                                    <span class="badge bg-danger" title="No photo consent"><i class="bi bi-camera-fill"></i></span>
-                                                {% endif %}
-                                            </td>
-                                            <!-- Status Column -->
-                                            <td style="width: 90px;">
-                                                {% if data.attendance %}
-                                                    <span class="badge" style="background-color: {{ data.attendance.get_status_color }}; font-size: 10px;">
-                                                        {{ data.attendance.get_status_display }}
-                                                    </span>
-                                                {% else %}
-                                                    <span class="badge" style="background-color: #6c757d; font-size: 10px;">Not yet arrived</span>
-                                                {% endif %}
-                                            </td>
-                                            <!-- Times Column -->
-                                            <td style="width: 80px;">
-                                                {% if data.attendance %}
-                                                    <small>{{ data.attendance.time_in|time:"H:i" }}</small>
-                                                    {% if data.attendance.time_out %}
-                                                        <br><small>Out: {{ data.attendance.time_out|time:"H:i" }}</small>
-                                                    {% endif %}
-                                                {% else %}
-                                                    <small class="text-muted">-</small>
-                                                {% endif %}
-                                            </td>
-                                            <!-- Current Balance Column -->
-                                            <td style="width: 100px;">
-                                                {% if data.balance != 0 %}
-                                                    <span class="{% if data.balance < 0 %}text-danger{% elif data.balance > 0 %}text-success{% else %}text-muted{% endif %}">
-                                                        ${{ data.balance|floatformat:2 }}
-                                                    </span>
-                                                {% else %}
-                                                    <span class="text-muted">$0.00</span>
-                                                {% endif %}
-                                            </td>
+                                            
                                             <!-- Actions Column -->
                                             <td style="width: 140px;">
                                                 <div class="d-grid gap-1">
@@ -181,7 +113,92 @@
                                                         <!-- Already picked up -->
                                                         <span class="border border-dark text-dark d-flex align-items-center justify-content-center" style="height: 50px; border-radius: 0.375rem;">Complete</span>
                                                     {% endif %}
+                                                    
+                                                    <!-- QR Code button without icon -->
+                                                    <a href="{% url 'child_qr_code' data.child.id %}" class="btn btn-outline-info btn-sm mt-1" 
+                                                       title="View QR Code" target="_blank">
+                                                        QR
+                                                    </a>
                                                 </div>
+                                            </td>
+                                            
+                                            <!-- Current Balance Column -->
+                                            <td style="width: 100px;">
+                                                {% if data.balance != 0 %}
+                                                    <span class="{% if data.balance < 0 %}text-danger{% elif data.balance > 0 %}text-success{% else %}text-muted{% endif %}">
+                                                        ${{ data.balance|floatformat:2 }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">$0.00</span>
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <!-- Photos Column -->
+                                            <td style="width: 60px; text-align: center;">
+                                                {% if data.child.photo_consent %}
+                                                    <span class="badge bg-success" title="Photo consent given"><i class="bi bi-camera"></i></span>
+                                                {% else %}
+                                                    <span class="badge bg-danger" title="No photo consent"><i class="bi bi-camera-fill"></i></span>
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <!-- Medical/Dietary Column -->
+                                            <td>
+                                                {% if data.child.has_dietary_needs %}
+                                                    <div class="alert alert-warning py-1 mb-1">
+                                                        <small><strong>Dietary:</strong> {{ data.child.dietary_needs_detail }}</small>
+                                                    </div>
+                                                {% endif %}
+                                                {% if data.child.has_medical_needs %}
+                                                    <div class="alert alert-danger py-1 mb-1">
+                                                        <small><strong>Medical:</strong> {{ data.child.medical_allergy_details }}</small>
+                                                    </div>
+                                                {% endif %}
+                                                {% if not data.child.has_dietary_needs and not data.child.has_medical_needs %}
+                                                    <small class="text-muted">None reported</small>
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <!-- Class Column -->
+                                            <td style="width: 80px;">
+                                                <small style="line-height: 1.2;">{{ data.child.get_class_short_name }}</small>
+                                            </td>
+                                            
+                                            <!-- Status Column -->
+                                            <td style="width: 90px;">
+                                                {% if data.attendance %}
+                                                    <span class="badge" style="background-color: {{ data.attendance.get_status_color }}; font-size: 10px;">
+                                                        {{ data.attendance.get_status_display }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge" style="background-color: #6c757d; font-size: 10px;">Not yet arrived</span>
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <!-- Times Column -->
+                                            <td style="width: 80px;">
+                                                {% if data.attendance %}
+                                                    <small>{{ data.attendance.time_in|time:"H:i" }}</small>
+                                                    {% if data.attendance.time_out %}
+                                                        <br><small>Out: {{ data.attendance.time_out|time:"H:i" }}</small>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <small class="text-muted">-</small>
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <!-- Parent Column -->
+                                            <td>
+                                                <strong>{{ data.child.parent.first_name }} {{ data.child.parent.last_name }}</strong><br>
+                                                <small class="text-muted">{{ data.child.parent.phone_number }}</small><br>
+                                                <small class="text-muted">{{ data.child.parent.email }}</small>
+                                            </td>
+                                            
+                                            <!-- Emergency Contact Column -->
+                                            <td>
+                                                <strong>{{ data.child.parent.emergency_contact_name }}</strong><br>
+                                                <small>{{ data.child.parent.emergency_contact_phone }}</small><br>
+                                                <small class="text-muted">{{ data.child.parent.get_emergency_contact_relationship_display }}</small>
                                             </td>
                                         </tr>
                                     {% endfor %}

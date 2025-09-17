@@ -121,7 +121,7 @@ class ParentProfile(models.Model):
         super().save(update_fields=['parent_qr_code_image'])
     
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.last_name}, {self.first_name} - {self.user.username}"
 
 
 class Child(models.Model):

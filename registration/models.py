@@ -212,7 +212,7 @@ class Child(models.Model):
         return class_mapping.get(self.child_class, self.get_child_class_display())
     
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.get_child_class_display()})"
+        return f"{self.first_name} {self.last_name} ({self.get_class_short_name()})"
 
 
 class Attendance(models.Model):

@@ -105,7 +105,7 @@
                                 <h5 class="mb-1">
                                     <i class="bi bi-person-circle"></i> 
                                     {% if interaction.parent_profile %}
-                                        {{ interaction.parent_profile.user.first_name }} {{ interaction.parent_profile.user.last_name }}
+                                        {{ interaction.parent_profile.first_name }} {{ interaction.parent_profile.last_name }}
                                     {% else %}
                                         {{ interaction.manual_first_name }} {{ interaction.manual_last_name|default:"" }}
                                     {% endif %}
@@ -115,7 +115,7 @@
                                     {% if interaction.conversation_team_member %}
                                         conversation by {{ interaction.conversation_team_member }}
                                     {% else %}
-                                        by {{ interaction.welcomer_profile.user.first_name }}
+                                        by {{ interaction.welcomer.user.first_name }}
                                     {% endif %}
                                 </small>
                             </div>
@@ -133,7 +133,7 @@
                                         <i class="bi bi-telephone"></i> {{ interaction.parent_profile.phone_number|default:"No phone" }}
                                     </small>
                                     <small class="text-muted d-block">
-                                        <i class="bi bi-envelope"></i> {{ interaction.parent_profile.user.email|default:"No email" }}
+                                        <i class="bi bi-envelope"></i> {{ interaction.parent_profile.email|default:"No email" }}
                                     </small>
                                 {% else %}
                                     {% if interaction.manual_phone %}
@@ -192,7 +192,7 @@
                                     <small class="text-muted">
                                         <i class="bi bi-people"></i> <strong>Children:</strong>
                                         {% for child in interaction.parent_profile.children.all %}
-                                            {{ child.first_name }} ({{ child.class_name }}){% if not forloop.last %}, {% endif %}
+                                            {{ child.first_name }} ({{ child.get_class_short_name }}){% if not forloop.last %}, {% endif %}
                                         {% endfor %}
                                     </small>
                                 </div>
@@ -208,16 +208,16 @@
                             <small class="text-muted">
                                 {% if interaction.conversation_team_member %}
                                     <i class="bi bi-person-badge"></i> {{ interaction.conversation_team_member }}
-                                    <span class="ms-2 text-muted">recorded by {{ interaction.welcomer_profile.user.first_name }}</span>
+                                    <span class="ms-2 text-muted">recorded by {{ interaction.welcomer.user.first_name }}</span>
                                 {% else %}
-                                    <i class="bi bi-person-badge"></i> {{ interaction.welcomer_profile.user.get_full_name }}
+                                    <i class="bi bi-person-badge"></i> {{ interaction.welcomer.user.get_full_name }}
                                 {% endif %}
                             </small>
                             <div>
                                 <a href="{% url 'interaction_detail' interaction.id %}" class="btn btn-outline-primary btn-sm">
                                     <i class="bi bi-eye"></i> View Details
                                 </a>
-                                {% if user.is_staff or user == interaction.welcomer_profile.user %}
+                                {% if user.is_staff or user == interaction.welcomer.user %}
                                     <a href="{% url 'edit_interaction' interaction.id %}" class="btn btn-outline-secondary btn-sm">
                                         <i class="bi bi-pencil"></i> Edit
                                     </a>

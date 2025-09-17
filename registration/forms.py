@@ -551,14 +551,8 @@ class ParentInteractionForm(forms.ModelForm):
         # Populate parent dropdown (sorted by last name)
         self.fields['parent_profile'].queryset = ParentProfile.objects.select_related('user').order_by('last_name', 'first_name')
         
-        # Populate child dropdown with child name and class
-        children = Child.objects.select_related('parent').order_by('first_name', 'last_name')
-        child_choices = [('', '--- Select a Child ---')]
-        for child in children:
-            display_name = f"{child.first_name} {child.last_name} ({child.get_class_short_name()})"
-            child_choices.append((child.id, display_name))
-        
-        self.fields['child_for_parent_lookup'].choices = child_choices
+        # Populate child dropdown - use queryset for ModelChoiceField
+        self.fields['child_for_parent_lookup'].queryset = Child.objects.select_related('parent').order_by('first_name', 'last_name')
         
         # Set initial values for search method radio buttons
         if not self.instance.pk:
@@ -584,11 +578,8 @@ class ParentInteractionForm(forms.ModelForm):
                 raise ValidationError("Please select a child when using child search.")
             # Set parent_profile based on selected child
             if child_for_parent_lookup:
-                try:
-                    child = Child.objects.get(id=child_for_parent_lookup)
-                    cleaned_data['parent_profile'] = child.parent
-                except Child.DoesNotExist:
-                    raise ValidationError("Selected child not found.")
+                # child_for_parent_lookup is a Child instance from the ModelChoiceField
+                cleaned_data['parent_profile'] = child_for_parent_lookup.parent
             # Clear manual fields
             for field in ['manual_first_name', 'manual_last_name', 'manual_phone', 
                          'manual_email', 'manual_address', 'manual_children_info']:

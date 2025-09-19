@@ -214,45 +214,55 @@ def calculate_charge_for_checkin(cls, child: Child, check_date: date = None) -> 
         
         return attendance, charge_amount, charge_reason
     
-    @classmethod
-    def get_family_weekly_summary(cls, parent_profile: ParentProfile, check_date: date = None) -> Dict:
-        """Get a summary of family's weekly activity and charges."""
-        if check_date is None:
-            check_date = cls.get_current_aest_date()
-        
-        week_start, week_end = cls.get_week_boundaries(check_date)
-        family_size = parent_profile.children.count()
-        
-        # Get weekly attendance
-        weekly_attendance = cls.get_weekly_attendance_for_family(parent_profile, check_date)
-        
-        # Count unique sign-ins (child+date combinations)
-        unique_signins = len(set(
-            (att.child_id, att.date) for att in weekly_attendance
-        ))
-        
-        # Calculate total weekly charges
-        weekly_charges = sum(
-            att.charge_amount or Decimal('0.00') for att in weekly_attendance
-        )
-        
-        # Determine next charge amount
-        next_charge, next_reason = cls.calculate_charge_for_checkin(
-            parent_profile.children.first(), check_date
-        ) if parent_profile.children.exists() else (Decimal('0.00'), 'No children')
-        
-        # Get current balance from payment account
-        from .payment_views import get_or_create_payment_account
-        payment_account = get_or_create_payment_account(parent_profile)
-        
-        return {
-            'week_start': week_start,
-            'week_end': week_end,
-            'family_size': family_size,
-            'unique_signins': unique_signins,
-            'weekly_charges': weekly_charges,
-            'next_charge_amount': next_charge,
-            'next_charge_reason': next_reason,
-            'current_balance': payment_account.balance,
-            'threshold': cls.SINGLE_CHILD_THRESHOLD if family_size == 1 else cls.MULTI_CHILD_THRESHOLD
-        }
+@classmethod
+def get_family_weekly_summary(cls, parent_profile: ParentProfile, check_date: date = None) -> Dict:
+    """Get a summary of family's weekly activity, charges, and weekly cap allowance."""
+    if check_date is None:
+        check_date = cls.get_current_aest_date()
+    
+    week_start, week_end = cls.get_week_boundaries(check_date)
+    family_size = parent_profile.children.count()
+    
+    # Get weekly attendance
+    weekly_attendance = cls.get_weekly_attendance_for_family(parent_profile, check_date)
+    
+    # Count unique sign-ins (child+date combinations)
+    unique_signins = len(set(
+        (att.child_id, att.date) for att in weekly_attendance
+    ))
+    
+    # Total weekly charges
+    weekly_charges = sum(att.charge_amount or Decimal('0.00') for att in weekly_attendance)
+    
+    # Determine how many children have attended this week
+    children_attended = set(att.child_id for att in weekly_attendance)
+    has_multiple_children_attended = len(children_attended) > 1 or family_size > 1
+    
+    # Weekly cap based on how many children have attended
+    weekly_cap = Decimal('40.00') if has_multiple_children_attended else Decimal('20.00')
+    
+    # Remaining allowance
+    remaining_allowance = max(Decimal('0.00'), weekly_cap - weekly_charges)
+    
+    # Next charge estimate
+    next_charge, next_reason = cls.calculate_charge_for_checkin(
+        parent_profile.children.first(), check_date
+    ) if parent_profile.children.exists() else (Decimal('0.00'), 'No children')
+    
+    # Get current balance from payment account
+    from .payment_views import get_or_create_payment_account
+    payment_account = get_or_create_payment_account(parent_profile)
+    
+    return {
+        'week_start': week_start,
+        'week_end': week_end,
+        'family_size': family_size,
+        'unique_signins': unique_signins,
+        'weekly_charges': weekly_charges,
+        'weekly_cap': weekly_cap,
+        'remaining_allowance': remaining_allowance,
+        'next_charge_amount': next_charge,
+        'next_charge_reason': next_reason,
+        'current_balance': payment_account.balance,
+        'threshold': cls.SINGLE_CHILD_THRESHOLD if family_size == 1 else cls.MULTI_CHILD_THRESHOLD
+    }

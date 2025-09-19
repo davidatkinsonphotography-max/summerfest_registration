@@ -105,62 +105,62 @@ class PaymentCalculator:
             date=check_date
         ).exists()
     
-@classmethod
-def calculate_charge_for_checkin(cls, child: Child, check_date: date = None) -> Tuple[Decimal, str]:
-    """
-    Calculate the charge for checking in a child.
+    @classmethod
+    def calculate_charge_for_checkin(cls, child: Child, check_date: date = None) -> Tuple[Decimal, str]:
+        """
+        Calculate the charge for checking in a child.
+        
+        Returns:
+            Tuple of (charge_amount, reason)
+        """
+        if check_date is None:
+            check_date = cls.get_current_aest_date()
+
+        parent_profile = child.parent
+
+        # Check if child already checked in today (no double charging)
+        if cls.has_child_checked_in_today(child, check_date):
+            return Decimal('0.00'), 'Already checked in today'
+
+        # Get family size (number of children registered)
+        family_size = parent_profile.children.count()
+
+        # Daily total so far
+        daily_total = cls.get_daily_family_charge_total(parent_profile, check_date)
+
+        # Weekly totals so far
+        week_start, week_end = cls.get_week_boundaries(check_date)
+        weekly_attendance = Attendance.objects.filter(
+            child__parent=parent_profile,
+            date__range=(week_start, check_date)  # include today’s date only if already checked in
+        )
+
+        weekly_total = sum(att.charge_amount or Decimal('0.00') for att in weekly_attendance)
+        children_attended = set(att.child_id for att in weekly_attendance)
+        has_multiple_children_attended = len(children_attended) > 1 or family_size > 1
     
-    Returns:
-        Tuple of (charge_amount, reason)
-    """
-    if check_date is None:
-        check_date = cls.get_current_aest_date()
+        # Determine weekly cap
+        weekly_cap = Decimal('40.00') if has_multiple_children_attended else Decimal('20.00')
 
-    parent_profile = child.parent
+        # Default charge = standard $6
+        charge = Decimal('6.00')
+        reason = 'Standard daily rate'
 
-    # Check if child already checked in today (no double charging)
-    if cls.has_child_checked_in_today(child, check_date):
-        return Decimal('0.00'), 'Already checked in today'
+        # Apply daily family cap first
+        if daily_total >= cls.DAILY_FAMILY_CAP:
+            return Decimal('0.00'), 'Daily family cap reached'
+        if daily_total + charge > cls.DAILY_FAMILY_CAP:
+            charge = cls.DAILY_FAMILY_CAP - daily_total
+            reason += ' (capped at daily family limit)'
 
-    # Get family size (number of children registered)
-    family_size = parent_profile.children.count()
+        # Apply weekly family cap
+        if weekly_total >= weekly_cap:
+            return Decimal('0.00'), 'Weekly family cap reached'
+        if weekly_total + charge > weekly_cap:
+            charge = weekly_cap - weekly_total
+            reason += ' (capped at weekly family limit)'
 
-    # Daily total so far
-    daily_total = cls.get_daily_family_charge_total(parent_profile, check_date)
-
-    # Weekly totals so far
-    week_start, week_end = cls.get_week_boundaries(check_date)
-    weekly_attendance = Attendance.objects.filter(
-        child__parent=parent_profile,
-        date__range=(week_start, check_date)  # include today’s date only if already checked in
-    )
-
-    weekly_total = sum(att.charge_amount or Decimal('0.00') for att in weekly_attendance)
-    children_attended = set(att.child_id for att in weekly_attendance)
-    has_multiple_children_attended = len(children_attended) > 1 or family_size > 1
-
-    # Determine weekly cap
-    weekly_cap = Decimal('40.00') if has_multiple_children_attended else Decimal('20.00')
-
-    # Default charge = standard $6
-    charge = Decimal('6.00')
-    reason = 'Standard daily rate'
-
-    # Apply daily family cap first
-    if daily_total >= cls.DAILY_FAMILY_CAP:
-        return Decimal('0.00'), 'Daily family cap reached'
-    if daily_total + charge > cls.DAILY_FAMILY_CAP:
-        charge = cls.DAILY_FAMILY_CAP - daily_total
-        reason += ' (capped at daily family limit)'
-
-    # Apply weekly family cap
-    if weekly_total >= weekly_cap:
-        return Decimal('0.00'), 'Weekly family cap reached'
-    if weekly_total + charge > weekly_cap:
-        charge = weekly_cap - weekly_total
-        reason += ' (capped at weekly family limit)'
-
-    return charge, reason
+        return charge, reason
 
     
     @classmethod

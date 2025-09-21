@@ -64,6 +64,7 @@ secret_key.txt
 local_settings.py
 production_settings.py
 settings_production.py
+.env
 
 # Test coverage
 htmlcov/
@@ -75,3 +76,4 @@ coverage.xml
 
 # Backup files
 *.bak
+

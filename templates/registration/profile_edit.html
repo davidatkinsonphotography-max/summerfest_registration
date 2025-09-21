@@ -11,65 +11,67 @@
                     <h3 class="mb-0"><i class="bi bi-pencil"></i> Edit Your Profile</h3>
                 </div>
                 <div class="card-body">
+                    <!-- Profile Update Form -->
                     <form method="post">
                         {% csrf_token %}
+                        <input type="hidden" name="update_profile" value="1">
                         
                         <!-- Basic Information -->
                         <h4 class="text-warning mt-4 mb-3">Personal Information</h4>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name *</label>
-                                {{ form.first_name }}
+                                <label for="{{ profile_form.first_name.id_for_label }}" class="form-label">First Name *</label>
+                                {{ profile_form.first_name }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name *</label>
-                                {{ form.last_name }}
+                                <label for="{{ profile_form.last_name.id_for_label }}" class="form-label">Last Name *</label>
+                                {{ profile_form.last_name }}
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="{{ form.street_address.id_for_label }}" class="form-label">Street Address *</label>
-                            {{ form.street_address }}
+                            <label for="{{ profile_form.street_address.id_for_label }}" class="form-label">Street Address *</label>
+                            {{ profile_form.street_address }}
                         </div>
                         
                         <div class="row">
                             <div class="col-md-8 mb-3">
-                                <label for="{{ form.city.id_for_label }}" class="form-label">City *</label>
-                                {{ form.city }}
+                                <label for="{{ profile_form.city.id_for_label }}" class="form-label">City *</label>
+                                {{ profile_form.city }}
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label for="{{ form.postcode.id_for_label }}" class="form-label">Postcode *</label>
-                                {{ form.postcode }}
+                                <label for="{{ profile_form.postcode.id_for_label }}" class="form-label">Postcode *</label>
+                                {{ profile_form.postcode }}
                             </div>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.email.id_for_label }}" class="form-label">Email Address *</label>
-                                {{ form.email }}
+                                <label for="{{ profile_form.email.id_for_label }}" class="form-label">Email Address *</label>
+                                {{ profile_form.email }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number *</label>
-                                {{ form.phone_number }}
+                                <label for="{{ profile_form.phone_number.id_for_label }}" class="form-label">Phone Number *</label>
+                                {{ profile_form.phone_number }}
                             </div>
                         </div>
                         
                         <!-- Program Information -->
                         <h4 class="text-warning mt-4 mb-3">Program Information</h4>
                         <div class="mb-3">
-                            <label for="{{ form.how_heard_about.id_for_label }}" class="form-label">How did you hear about Summerfest? *</label>
-                            {{ form.how_heard_about }}
+                            <label for="{{ profile_form.how_heard_about.id_for_label }}" class="form-label">How did you hear about Summerfest? *</label>
+                            {{ profile_form.how_heard_about }}
                         </div>
                         
                         <div class="mb-3" id="additional-info-container">
-                            <label for="{{ form.additional_information.id_for_label }}" class="form-label">Additional Information</label>
-                            {{ form.additional_information }}
+                            <label for="{{ profile_form.additional_information.id_for_label }}" class="form-label">Additional Information</label>
+                            {{ profile_form.additional_information }}
                         </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Do you attend a church on a regular basis? *</label>
                             <div class="form-check-container">
-                                {% for choice in form.church_attendance_choice %}
+                                {% for choice in profile_form.church_attendance_choice %}
                                     <div class="form-check">
                                         {{ choice.tag }}
                                         <label class="form-check-label" for="{{ choice.id_for_label }}">
@@ -81,26 +83,26 @@
                         </div>
                         
                         <div class="mb-3" id="which-church-container">
-                            <label for="{{ form.which_church.id_for_label }}" class="form-label">Which Church?</label>
-                            {{ form.which_church }}
+                            <label for="{{ profile_form.which_church.id_for_label }}" class="form-label">Which Church?</label>
+                            {{ profile_form.which_church }}
                         </div>
                         
                         <!-- Emergency Contact -->
                         <h4 class="text-warning mt-4 mb-3">Emergency Contact</h4>
                         <div class="mb-3">
-                            <label for="{{ form.emergency_contact_name.id_for_label }}" class="form-label">Emergency Contact Full Name *</label>
-                            {{ form.emergency_contact_name }}
+                            <label for="{{ profile_form.emergency_contact_name.id_for_label }}" class="form-label">Emergency Contact Full Name *</label>
+                            {{ profile_form.emergency_contact_name }}
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.emergency_contact_phone.id_for_label }}" class="form-label">Emergency Contact Phone *</label>
-                                {{ form.emergency_contact_phone }}
+                                <label for="{{ profile_form.emergency_contact_phone.id_for_label }}" class="form-label">Emergency Contact Phone *</label>
+                                {{ profile_form.emergency_contact_phone }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Relationship to Child *</label>
                                 <div class="form-check-container">
-                                    {% for choice in form.emergency_contact_relationship %}
+                                    {% for choice in profile_form.emergency_contact_relationship %}
                                         <div class="form-check">
                                             {{ choice.tag }}
                                             <label class="form-check-label" for="{{ choice.id_for_label }}">
@@ -113,9 +115,9 @@
                         </div>
                         
                         <!-- Form Errors -->
-                        {% if form.non_field_errors %}
+                        {% if profile_form.non_field_errors %}
                             <div class="alert alert-danger">
-                                {{ form.non_field_errors }}
+                                {{ profile_form.non_field_errors }}
                             </div>
                         {% endif %}
                         
@@ -126,6 +128,71 @@
                             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Back to Dashboard
                             </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Password Change Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0"><i class="bi bi-key"></i> Change Password</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="change_password" value="1">
+                        
+                        <div class="mb-3">
+                            <label for="{{ password_form.current_password.id_for_label }}" class="form-label">Current Password *</label>
+                            {{ password_form.current_password }}
+                            {% if password_form.current_password.errors %}
+                                <div class="text-danger small">
+                                    {% for error in password_form.current_password.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ password_form.new_password1.id_for_label }}" class="form-label">New Password *</label>
+                            {{ password_form.new_password1 }}
+                            <div class="form-text text-muted">
+                                <small><i class="bi bi-info-circle"></i> Password must be at least 8 characters with 1 capital letter and 1 number</small>
+                            </div>
+                            {% if password_form.new_password1.errors %}
+                                <div class="text-danger small">
+                                    {% for error in password_form.new_password1.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ password_form.new_password2.id_for_label }}" class="form-label">Confirm New Password *</label>
+                            {{ password_form.new_password2 }}
+                            {% if password_form.new_password2.errors %}
+                                <div class="text-danger small">
+                                    {% for error in password_form.new_password2.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Password Form Errors -->
+                        {% if password_form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ password_form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-info btn-lg">
+                                <i class="bi bi-key"></i> Change Password
+                            </button>
                         </div>
                     </form>
                 </div>

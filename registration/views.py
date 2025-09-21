@@ -89,6 +89,26 @@ def home(request):
     return render(request, 'registration/home.html')
 
 
+def label_preview(request):
+    """Preview printable child labels (3cm x 5cm) for layout testing."""
+    # Sample data to render a variety of cases
+    samples = [
+        {
+            'first_name': 'Oliver', 'last_name': 'SMITH', 'class_display': 'Minis',
+            'medical': True, 'dietary': False, 'photo': True
+        },
+        {
+            'first_name': 'Amelia', 'last_name': 'O’REILLY', 'class_display': 'Nitro',
+            'medical': False, 'dietary': True, 'photo': True
+        },
+        {
+            'first_name': 'Noah', 'last_name': 'LEE', 'class_display': '56ers',
+            'medical': True, 'dietary': True, 'photo': False
+        },
+    ]
+    return render(request, 'registration/label_preview.html', {'samples': samples})
+
+
 def parent_register(request):
     """Parent registration view"""
     if request.method == 'POST':
@@ -541,6 +561,7 @@ def site_map(request):
             ('Edit Profile', '/profile_edit/', 'Update parent information'),
             ('Payment Dashboard', '/payment/dashboard/', 'View account balance and payment history'),
             ('Add Funds', '/payment/add_funds/', 'Add money to account via credit card'),
+            ('Label Preview', '/labels/preview/', 'Preview printable labels layout for children'),
             # Dynamic URLs will be added if test data exists
         ],
         'Teacher/Staff Only': [

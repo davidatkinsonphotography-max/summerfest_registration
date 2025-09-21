@@ -95,6 +95,12 @@ class ParentProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def save(self, *args, **kwargs):
+        # Normalize name casing before saving
+        if self.first_name:
+            self.first_name = ' '.join([part.capitalize() for part in self.first_name.strip().split()])
+        if self.last_name:
+            self.last_name = self.last_name.strip().upper()
+        
         super().save(*args, **kwargs)
         if not self.parent_qr_code_image:
             self.generate_parent_qr_code()
@@ -175,6 +181,12 @@ class Child(models.Model):
             raise ValidationError('Child must be born after January 1, 2010')
     
     def save(self, *args, **kwargs):
+        # Normalize child name casing before saving
+        if self.first_name:
+            self.first_name = ' '.join([part.capitalize() for part in self.first_name.strip().split()])
+        if self.last_name:
+            self.last_name = self.last_name.strip().upper()
+        
         super().save(*args, **kwargs)
         if not self.qr_code_image:
             self.generate_qr_code()

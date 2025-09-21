@@ -54,6 +54,9 @@ urlpatterns = [
     
     # site map for testing functionality
     path("sitemap/", views.site_map, name="site_map"),
+
+    # Label preview (linked from sitemap only)
+    path('labels/preview/', views.label_preview, name='label_preview'),
     
     # Payment system
     path('payment/dashboard/', payment_dashboard, name='payment_dashboard'),

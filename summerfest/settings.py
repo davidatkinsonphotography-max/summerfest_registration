@@ -125,6 +125,9 @@ PAYMENT_CURRENCY = 'AUD'
 PAYMENT_SUCCESS_URL = '/payment/success/'
 PAYMENT_CANCEL_URL = '/payment/cancel/'
 
+# Online payment incentive (e.g., 1.2 means $15 paid becomes $18 credited)
+ONLINE_PAYMENT_BONUS_MULTIPLIER = os.environ.get('ONLINE_PAYMENT_BONUS_MULTIPLIER', '1.20')
+
 # Email Configuration
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -140,4 +143,10 @@ DEFAULT_FROM_EMAIL = 'Summerfest Registration <summerfest@example.com>'
 SERVER_EMAIL = 'summerfest@example.com'
 DEFAULT_FROM_EMAIL = 'Summerfest Registration <summerfest@example.com>'
 SERVER_EMAIL = 'summerfest@example.com'
+
+# Authentication backends: allow login via username, email, or phone number
+AUTHENTICATION_BACKENDS = [
+    'registration.backends.UsernameEmailPhoneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 

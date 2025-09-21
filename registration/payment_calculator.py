@@ -14,24 +14,19 @@ from .models import ParentProfile, Child, Attendance, PaymentTransaction
 AEST = pytz.timezone('Australia/Sydney')  # UTC+10 with DST handling
 
 class PaymentCalculator:
-    """Handles payment calculation for check-ins based on family size and weekly limits."""
+    """Handles payment calculation for check-ins based on simplified rules.
+
+    New logic:
+    - Charge $6 per child per day (Wednesday–Saturday only)
+    - Cap at 2 children per family per day ($12/day max)
+    - Sunday is free
+    - No weekly caps or thresholds
+    """
     
-    # Pricing rules
-    SINGLE_CHILD_RATES = {
-        'standard': Decimal('6.00'),  # First 3 sign-ins
-        'reduced': Decimal('2.00'),   # 4th sign-in
-        'free': Decimal('0.00')       # 5th+ sign-ins
-    }
+    DAILY_CHILD_RATE = Decimal('6.00')
+    DAILY_FAMILY_CAP = Decimal('12.00')  # Effectively 2 children max per day
     
-    MULTI_CHILD_RATES = {
-        'standard': Decimal('6.00'),  # First 6 sign-ins
-        'reduced': Decimal('4.00'),   # 7th sign-in
-        'free': Decimal('0.00')       # 8th+ sign-ins
-    }
-    
-    DAILY_FAMILY_CAP = Decimal('12.00')
-    SINGLE_CHILD_THRESHOLD = 3  # Free after 3 sign-ins
-    MULTI_CHILD_THRESHOLD = 6   # Free after 6 sign-ins
+    CHARGE_WEEKDAYS = {2, 3, 4, 5}  # Wed(2)–Sat(5) only
     
     @classmethod
     def get_current_aest_datetime(cls) -> datetime:
@@ -46,14 +41,11 @@ class PaymentCalculator:
     @classmethod
     def get_week_boundaries(cls, check_date: date) -> Tuple[date, date]:
         """
-        Get Tuesday-Monday week boundaries for a given date.
-        Week runs from Tuesday 00:00 to Monday 23:59:59.
+        Legacy helper (not used by simplified rules). Keeping for compatibility with callers.
         """
-        # Find the Tuesday of the current week
-        days_since_tuesday = (check_date.weekday() + 6) % 7  # Tuesday = 0
-        week_start = check_date - timedelta(days=days_since_tuesday)  # Tuesday
-        week_end = week_start + timedelta(days=6)  # Following Monday
-        
+        days_since_monday = check_date.weekday()
+        week_start = check_date - timedelta(days=days_since_monday)
+        week_end = week_start + timedelta(days=6)
         return week_start, week_end
     
     @classmethod
@@ -78,10 +70,7 @@ class PaymentCalculator:
     def get_daily_family_charge_total(cls, parent_profile: ParentProfile, check_date: date) -> Decimal:
         """Get total charges for a family on a specific date."""
         daily_attendance = cls.get_daily_attendance_for_family(parent_profile, check_date)
-        return sum(
-            attendance.charge_amount or Decimal('0.00') 
-            for attendance in daily_attendance
-        )
+        return sum((attendance.charge_amount or Decimal('0.00')) for attendance in daily_attendance)
     
     @classmethod
     def count_weekly_signins_for_family(cls, parent_profile: ParentProfile, check_date: date) -> int:
@@ -108,7 +97,7 @@ class PaymentCalculator:
     @classmethod
     def calculate_charge_for_checkin(cls, child: Child, check_date: date = None) -> Tuple[Decimal, str]:
         """
-        Calculate the charge for checking in a child.
+        Calculate the charge for checking in a child under simplified rules.
         
         Returns:
             Tuple of (charge_amount, reason)
@@ -118,49 +107,24 @@ class PaymentCalculator:
 
         parent_profile = child.parent
 
-        # Check if child already checked in today (no double charging)
+        # No double-charging per child per day
         if cls.has_child_checked_in_today(child, check_date):
             return Decimal('0.00'), 'Already checked in today'
 
-        # Get family size (number of children registered)
-        family_size = parent_profile.children.count()
+        # Sunday is free; only charge Wed–Sat
+        weekday = check_date.weekday()
+        if weekday not in cls.CHARGE_WEEKDAYS:
+            return Decimal('0.00'), 'No charge today'
 
-        # Daily total so far
-        daily_total = cls.get_daily_family_charge_total(parent_profile, check_date)
+        # Count how many charged children already today for this family
+        daily_attendance = cls.get_daily_attendance_for_family(parent_profile, check_date)
+        charged_count = sum(1 for att in daily_attendance if (att.charge_amount or Decimal('0.00')) > 0)
 
-        # Weekly totals so far
-        week_start, week_end = cls.get_week_boundaries(check_date)
-        weekly_attendance = Attendance.objects.filter(
-            child__parent=parent_profile,
-            date__range=(week_start, check_date)  # include today’s date only if already checked in
-        )
+        if charged_count >= 2:
+            return Decimal('0.00'), 'Daily family cap reached (2 children)'
 
-        weekly_total = sum(att.charge_amount or Decimal('0.00') for att in weekly_attendance)
-        children_attended = set(att.child_id for att in weekly_attendance)
-        has_multiple_children_attended = len(children_attended) > 1 or family_size > 1
-    
-        # Determine weekly cap
-        weekly_cap = Decimal('40.00') if has_multiple_children_attended else Decimal('20.00')
-
-        # Default charge = standard $6
-        charge = Decimal('6.00')
-        reason = 'Standard daily rate'
-
-        # Apply daily family cap first
-        if daily_total >= cls.DAILY_FAMILY_CAP:
-            return Decimal('0.00'), 'Daily family cap reached'
-        if daily_total + charge > cls.DAILY_FAMILY_CAP:
-            charge = cls.DAILY_FAMILY_CAP - daily_total
-            reason += ' (capped at daily family limit)'
-
-        # Apply weekly family cap
-        if weekly_total >= weekly_cap:
-            return Decimal('0.00'), 'Weekly family cap reached'
-        if weekly_total + charge > weekly_cap:
-            charge = weekly_cap - weekly_total
-            reason += ' (capped at weekly family limit)'
-
-        return charge, reason
+        # Charge standard daily rate
+        return cls.DAILY_CHILD_RATE, 'Standard daily rate (per child)'
 
     
     @classmethod

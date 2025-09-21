@@ -48,16 +48,13 @@ def payment_dashboard(request):
     # Get daily charges
     daily_charges = payment_account.daily_charges.all()[:10]
     
-    # Calculate estimated daily cost for this family
+    # Children list for display
     children = parent_profile.children.all()
-    # Estimate cost based on new system: $6 for early sign-ins
-    estimated_daily_cost = Decimal('6.00') if children else Decimal('0.00')
     
     context = {
         'payment_account': payment_account,
         'recent_transactions': recent_transactions,
         'daily_charges': daily_charges,
-        'estimated_daily_cost': estimated_daily_cost,
         'children': children,
     }
     
@@ -148,16 +145,24 @@ def payment_success(request):
             ).first()
             
             if not existing_transaction:
-                # Add funds to account
+                # Apply online payment bonus
+                from decimal import Decimal
+                try:
+                    bonus_multiplier = Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
+                except Exception:
+                    bonus_multiplier = Decimal('1.00')
+                credited_amount = (amount * bonus_multiplier).quantize(Decimal('0.01'))
+
+                # Add credited funds to account
                 payment_account.add_funds(
-                    amount,
-                    f"Online card payment - ${amount}"
+                    credited_amount,
+                    f"Online card payment ${amount} (credited ${credited_amount})"
                 )
                 
-                # Update transaction with Stripe details
+                # Update transaction with Stripe details (find by credited amount and description)
                 transaction = payment_account.transactions.filter(
-                    amount=amount,
-                    description=f"Online card payment - ${amount}"
+                    amount=credited_amount,
+                    description=f"Online card payment ${amount} (credited ${credited_amount})"
                 ).first()
                 
                 if transaction:
@@ -165,7 +170,7 @@ def payment_success(request):
                     transaction.payment_method = 'stripe'
                     transaction.save()
                 
-                messages.success(request, f'Payment successful! ${amount} has been added to your account.')
+                messages.success(request, f'Payment successful! You paid ${amount}, we credited ${credited_amount} to your account as an online bonus.')
             else:
                 messages.info(request, 'This payment has already been processed.')
         else:

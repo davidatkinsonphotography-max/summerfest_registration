@@ -260,20 +260,42 @@ class CheckoutForm(forms.Form):
 class AddFundsForm(forms.Form):
     """Form for parents to add funds to their account"""
     
-    AMOUNT_CHOICES = [
-        ('6.00', '$6'),
-        ('12.00', '$12'),
-        ('18.00', '$18'),
-        ('20.00', '$20'),
-        ('40.00', '$40'),
-        ('custom', 'Other Amount')
-    ]
-    
-    amount_choice = forms.ChoiceField(
-        choices=AMOUNT_CHOICES,
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
-        label="Select amount to add"
-    )
+    def __init__(self, *args, **kwargs):
+        from django.conf import settings
+        super().__init__(*args, **kwargs)
+        # Build dynamic choices with 1.2x credit shown
+        try:
+            multiplier = Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
+        except Exception:
+            multiplier = Decimal('1.20')
+        def credit(amount: Decimal) -> Decimal:
+            return (amount * multiplier).quantize(Decimal('0.01'))
+        def single_label(amount: Decimal, days: int) -> str:
+            c = credit(amount)
+            day_word = 'day' if days == 1 else 'days'
+            return f"${amount:.0f} {days} {day_word} - Single child (pay ${amount:.0f} online, we will credit ${c} to your balance)"
+        def family_label(amount: Decimal, days: int) -> str:
+            c = credit(amount)
+            day_word = 'day' if days == 1 else 'days'
+            return f"${amount:.0f} {days} {day_word} - Family (pay ${amount:.0f} online, we will credit ${c} to your balance)"
+
+        # Build 8 distinct options (including duplicates for amounts under different groups)
+        choices = [
+            ('5.00-single', single_label(Decimal('5.00'), 1)),
+            ('10.00-single', single_label(Decimal('10.00'), 2)),
+            ('15.00-single', single_label(Decimal('15.00'), 3)),
+            ('20.00-single', single_label(Decimal('20.00'), 4)),
+            ('10.00-family', family_label(Decimal('10.00'), 1)),
+            ('20.00-family', family_label(Decimal('20.00'), 2)),
+            ('30.00-family', family_label(Decimal('30.00'), 3)),
+            ('40.00-family', family_label(Decimal('40.00'), 4)),
+            ('custom', 'Other Amount')
+        ]
+        self.fields['amount_choice'] = forms.ChoiceField(
+            choices=choices,
+            widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+            label="Select amount to add"
+        )
     
     custom_amount = forms.DecimalField(
         max_digits=10,
@@ -302,9 +324,12 @@ class AddFundsForm(forms.Form):
     
     def get_amount(self):
         """Get the selected amount as a Decimal"""
-        if self.cleaned_data['amount_choice'] == 'custom':
+        choice = self.cleaned_data['amount_choice']
+        if choice == 'custom':
             return self.cleaned_data['custom_amount']
-        return Decimal(self.cleaned_data['amount_choice'])
+        # Values like '10.00-single' or '10.00-family' => extract numeric part
+        numeric = choice.split('-', 1)[0]
+        return Decimal(numeric)
 
 
 class ManualPaymentForm(forms.Form):

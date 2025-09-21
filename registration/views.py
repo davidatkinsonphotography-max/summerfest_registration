@@ -109,6 +109,19 @@ def label_preview(request):
     return render(request, 'registration/label_preview.html', {'samples': samples})
 
 
+def set_stripe_mode(request, mode):
+    """Set Stripe mode to 'test' or 'live' via sitemap (session-based)."""
+    # Only allow if sitemap is authenticated or user is staff
+    if not (request.session.get('sitemap_authenticated') or request.user.is_staff):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden('Not authorized')
+    if mode not in ['test', 'live']:
+        messages.error(request, 'Invalid Stripe mode.')
+        return redirect('site_map')
+    request.session['stripe_mode'] = mode
+    messages.success(request, f'Stripe mode set to {mode.upper()}.')
+    return redirect('site_map')
+
 def parent_register(request):
     """Parent registration view"""
     if request.method == 'POST':
@@ -630,6 +643,7 @@ def site_map(request):
         'test_credentials': test_credentials,
         'sample_data': sample_data,
         'test_children': test_children,
+        'stripe_mode': request.session.get('stripe_mode', 'live')
     }
     
     return render(request, 'registration/site_map.html', context)

@@ -145,6 +145,27 @@
     </div>
     {% endif %}
 
+    <!-- Stripe Mode Toggle -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-sliders"></i> Stripe Mode</h3>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="mb-1">Current: <strong>{{ stripe_mode|upper }}</strong></div>
+                        <small class="text-muted">Keys are read from environment variables; switching does not expose secret keys here.</small>
+                    </div>
+                    <div>
+                        <a href="{% url 'set_stripe_mode' 'test' %}" class="btn btn-outline-primary btn-sm me-2">Use TEST</a>
+                        <a href="{% url 'set_stripe_mode' 'live' %}" class="btn btn-primary btn-sm">Use LIVE</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- URL Groups by Role -->
     <div class="row">
         <div class="col-12">

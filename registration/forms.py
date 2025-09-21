@@ -260,20 +260,39 @@ class CheckoutForm(forms.Form):
 class AddFundsForm(forms.Form):
     """Form for parents to add funds to their account"""
     
-    AMOUNT_CHOICES = [
-        ('6.00', '$6'),
-        ('12.00', '$12'),
-        ('18.00', '$18'),
-        ('20.00', '$20'),
-        ('40.00', '$40'),
-        ('custom', 'Other Amount')
-    ]
-    
-    amount_choice = forms.ChoiceField(
-        choices=AMOUNT_CHOICES,
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
-        label="Select amount to add"
-    )
+    def __init__(self, *args, **kwargs):
+        from django.conf import settings
+        super().__init__(*args, **kwargs)
+        # Build dynamic choices with 1.2x credit shown
+        try:
+            multiplier = Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
+        except Exception:
+            multiplier = Decimal('1.20')
+        def credit_label(amount: Decimal, single_days: str = '', family_days: str = '') -> str:
+            credited = (amount * multiplier).quantize(Decimal('0.01'))
+            day_text = []
+            if single_days:
+                day_text.append(f"{single_days} - Single child")
+            if family_days:
+                day_text.append(f"{family_days} - Family")
+            days_str = ''
+            if day_text:
+                days_str = f" { ' / '.join(day_text) }"
+            return f"${amount:.0f}{days_str} (pay ${amount:.0f} online, we will credit ${credited} to your balance)"
+        choices = [
+            ('5.00', credit_label(Decimal('5.00'), single_days='1 day')),
+            ('10.00', credit_label(Decimal('10.00'), single_days='2 days', family_days='1 day')),
+            ('15.00', credit_label(Decimal('15.00'), single_days='3 days')),
+            ('20.00', credit_label(Decimal('20.00'), single_days='4 days', family_days='2 days')),
+            ('30.00', credit_label(Decimal('30.00'), family_days='3 days')),
+            ('40.00', credit_label(Decimal('40.00'), family_days='4 days')),
+            ('custom', 'Other Amount')
+        ]
+        self.fields['amount_choice'] = forms.ChoiceField(
+            choices=choices,
+            widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+            label="Select amount to add"
+        )
     
     custom_amount = forms.DecimalField(
         max_digits=10,

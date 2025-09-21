@@ -146,9 +146,12 @@
                 const additionalInfoContainer = additionalInfoField.closest('.mb-3');
                 
                 function toggleAdditionalInfo() {
-                    if (howHeardSelect.value === 'friend') {
+                    const selectedOption = howHeardSelect.options[howHeardSelect.selectedIndex];
+                    const text = selectedOption ? selectedOption.text.toLowerCase() : '';
+                    const needsExtra = text.includes('additional information') || text.includes('please fill');
+                    if (needsExtra) {
                         additionalInfoContainer.style.display = 'block';
-                        additionalInfoField.required = true;
+                        additionalInfoField.required = false; // not mandatory per requirements
                     } else {
                         additionalInfoContainer.style.display = 'none';
                         additionalInfoField.required = false;

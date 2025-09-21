@@ -175,6 +175,9 @@ class PaymentCalculator:
                 transaction_type='debit',
                 description=f'Check-in charge for {child.first_name} {child.last_name} on {check_date}'
             )
+            
+            # Refresh the payment account to ensure we have the latest balance
+            payment_account.refresh_from_db()
         
         return attendance, charge_amount, charge_reason
     

@@ -356,6 +356,12 @@ def attendance_scan(request):
                         'message': f'Check-in failed: {str(e)}'
                     })
             
+            # Get updated balance after check-in
+            remaining_balance = Decimal('0.00')
+            if hasattr(child.parent, 'payment_account'):
+                child.parent.payment_account.refresh_from_db()
+                remaining_balance = child.parent.payment_account.balance
+            
             return JsonResponse({
                 'status': 'success',
                 'message': f'{child.first_name} {child.last_name} has been checked in!',
@@ -364,7 +370,7 @@ def attendance_scan(request):
                 'time': attendance.time_in.strftime('%H:%M'),
                 'charge': f'${charge_amount}' if charge_amount > 0 else 'Free',
                 'charge_reason': charge_reason,
-                'remaining_balance': f'${child.parent.payment_account.balance if hasattr(child.parent, "payment_account") else "0.00"}',
+                'remaining_balance': f'${remaining_balance}',
                 # Additional child information for persistent check-in list
                 'dietary_needs': child.has_dietary_needs,
                 'medical_needs': child.has_medical_needs,
@@ -891,6 +897,12 @@ def manual_checkin_child(request, child_id):
             attendance.checked_in_by = request.user
             attendance.save(update_fields=['checked_in_by'])
             
+            # Get updated balance after check-in
+            remaining_balance = Decimal('0.00')
+            if hasattr(child.parent, 'payment_account'):
+                child.parent.payment_account.refresh_from_db()
+                remaining_balance = child.parent.payment_account.balance
+            
             return JsonResponse({
                 'status': 'success',
                 'message': f'{child.first_name} {child.last_name} has been checked in successfully!',
@@ -898,7 +910,7 @@ def manual_checkin_child(request, child_id):
                 'time': attendance.time_in.strftime('%H:%M'),
                 'charge': f'{charge_amount:.2f}' if charge_amount > 0 else '0.00',
                 'charge_reason': charge_reason,
-                'remaining_balance': f'{child.parent.payment_account.balance if hasattr(child.parent, "payment_account") else Decimal("0.00"):.2f}'
+                'remaining_balance': f'{remaining_balance:.2f}'
             })
             
         except Exception as e:

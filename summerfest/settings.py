@@ -91,7 +91,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Australia/Sydney'  # UTC+10 (AEST) / UTC+11 (AEDT)
 USE_I18N = True
 USE_TZ = True
 

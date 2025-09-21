@@ -31,6 +31,9 @@ urlpatterns = [
     # Parent dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
     path('profile_edit/', views.profile_edit, name='profile_edit'),
+
+    # Parent QR printing
+    path('parent/qr/print/', views.print_all_qr, name='print_all_qr'),
     
     # Child management
     path('add_child/', views.add_child, name='add_child'),

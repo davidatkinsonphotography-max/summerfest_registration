@@ -109,6 +109,26 @@ def label_preview(request):
     return render(request, 'registration/label_preview.html', {'samples': samples})
 
 
+@login_required
+def print_all_qr(request):
+    """Printable page with all QR codes and child details for the logged-in parent."""
+    try:
+        parent_profile = request.user.parentprofile
+    except ParentProfile.DoesNotExist:
+        messages.error(request, 'Please complete your registration first.')
+        return redirect('parent_register')
+
+    children = list(parent_profile.children.all())
+    # Ensure QR images exist
+    for child in children:
+        if not child.qr_code_image:
+            child.generate_qr_code()
+    return render(request, 'registration/print_all_qr.html', {
+        'parent_profile': parent_profile,
+        'children': children,
+    })
+
+
 def set_stripe_mode(request, mode):
     """Set Stripe mode to 'test' or 'live' via sitemap (session-based)."""
     # Only allow if sitemap is authenticated or user is staff
@@ -567,6 +587,7 @@ def site_map(request):
             ('Parent Registration', '/parent_register/', 'Sign up new parents'),
             ('Login', '/login/', 'Login for existing users'),
             ('Template Previews', '/preview/', 'View all templates (development only)'),
+            ('Label Preview (Sample Labels)', '/labels/preview/', 'Preview printable labels layout for children'),
         ],
         'Authenticated Parent': [
             ('Dashboard', '/dashboard/', 'Parent dashboard - view children'),

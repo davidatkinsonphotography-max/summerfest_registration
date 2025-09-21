@@ -17,14 +17,14 @@
           <div class="class-name">{{ s.class_display }}</div>
         </div>
         <div class="col-icons">
-          <div class="icon {{ s.medical|yesno:'yes,no' }}" title="Medical needs">
+          <div class="icon {% if s.medical %}yes{% else %}no{% endif %}" title="Medical needs">
             <!-- First aid cross -->
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
               <rect x="9" y="3" width="6" height="18" rx="2"></rect>
               <rect x="3" y="9" width="18" height="6" rx="2"></rect>
             </svg>
           </div>
-          <div class="icon {{ s.dietary|yesno:'yes,no' }}" title="Dietary needs">
+          <div class="icon {% if s.dietary %}yes{% else %}no{% endif %}" title="Dietary needs">
             <!-- Plate with knife and fork -->
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
               <circle cx="12" cy="12" r="7" fill="currentColor"></circle>
@@ -32,7 +32,7 @@
               <rect x="19" y="3" width="2" height="18"></rect>
             </svg>
           </div>
-          <div class="icon {{ s.photo|yesno:'yes,no'|lower == 'yes' and 'yes' or 'no' }}" title="Photo consent">
+          <div class="icon {% if s.photo %}yes{% else %}no{% endif %}" title="Photo consent">
             <!-- Camera -->
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
               <rect x="3" y="7" width="18" height="12" rx="2"></rect>
@@ -41,9 +41,9 @@
           </div>
         </div>
         <div class="col-yn">
-          <div class="yn {{ s.medical|yesno:'yes,no' }}">{{ s.medical|yesno:'Yes,No' }}</div>
-          <div class="yn {{ s.dietary|yesno:'yes,no' }}">{{ s.dietary|yesno:'Yes,No' }}</div>
-          <div class="yn {{ s.photo|yesno:'yes,no'|lower == 'yes' and 'yes' or 'no' }}">{{ s.photo|yesno:'Yes,No' }}</div>
+          <div class="yn {% if s.medical %}yes{% else %}no{% endif %}">{% if s.medical %}Yes{% else %}No{% endif %}</div>
+          <div class="yn {% if s.dietary %}yes{% else %}no{% endif %}">{% if s.dietary %}Yes{% else %}No{% endif %}</div>
+          <div class="yn {% if s.photo %}yes{% else %}no{% endif %}">{% if s.photo %}Yes{% else %}No{% endif %}</div>
         </div>
       </div>
     </div>

@@ -389,7 +389,7 @@ def export_payments_detailed_csv(request):
         'Description',
         'Payment_Method',
         'Reference',
-        'Account_Balance_After',
+        'Account_Balance_Now',
         'Processed_By',
         'Family_Total_Children',
         'Current_Account_Balance'
@@ -404,6 +404,16 @@ def export_payments_detailed_csv(request):
         parent = transaction.payment_account.parent_profile
         total_children = parent.children.count()
         
+        # Choose a sensible reference if available
+        reference = (
+            transaction.stripe_charge_id
+            or transaction.stripe_payment_intent_id
+            or ''
+        )
+        
+        # Determine who processed/recorded the transaction
+        processed_by = transaction.recorded_by.username if transaction.recorded_by else 'System'
+        
         writer.writerow([
             transaction.id,
             f"{parent.first_name} {parent.last_name}",
@@ -415,9 +425,9 @@ def export_payments_detailed_csv(request):
             f"${transaction.amount}",
             transaction.description or 'No description',
             transaction.payment_method or 'Unknown',
-            transaction.reference or 'No reference',
-            f"${transaction.balance_after}",
-            transaction.processed_by.username if transaction.processed_by else 'System',
+            reference or 'No reference',
+            f"${transaction.payment_account.balance}",
+            processed_by,
             total_children,
             f"${transaction.payment_account.balance}"
         ])

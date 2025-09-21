@@ -32,15 +32,43 @@
                         <div class="mb-4">
                             <label class="form-label"><strong>Select amount to add:</strong></label>
                             <div>
+                                <h6 class="mt-2">Single child</h6>
                                 {% for value, label in form.amount_choice.field.choices %}
+                                    {% if value.endswith('-single') %}
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="radio" name="amount_choice" 
-                                               id="amount_{{ value }}" value="{{ value }}" 
-                                               {% if value == 'custom' %}onchange="toggleCustomAmount()"{% endif %}>
-                                        <label class="form-check-label" for="amount_{{ value }}">
+                                               id="amount_{{ value|slugify }}" value="{{ value }}">
+                                        <label class="form-check-label" for="amount_{{ value|slugify }}">
                                             {{ label }}
                                         </label>
                                     </div>
+                                    {% endif %}
+                                {% endfor %}
+
+                                <h6 class="mt-3">2+ children</h6>
+                                {% for value, label in form.amount_choice.field.choices %}
+                                    {% if value.endswith('-family') %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="amount_choice" 
+                                               id="amount_{{ value|slugify }}" value="{{ value }}">
+                                        <label class="form-check-label" for="amount_{{ value|slugify }}">
+                                            {{ label }}
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+
+                                <h6 class="mt-3">Other</h6>
+                                {% for value, label in form.amount_choice.field.choices %}
+                                    {% if value == 'custom' %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="amount_choice" 
+                                               id="amount_custom" value="custom" onchange="toggleCustomAmount()">
+                                        <label class="form-check-label" for="amount_custom">
+                                            {{ label }}
+                                        </label>
+                                    </div>
+                                    {% endif %}
                                 {% endfor %}
                             </div>
                             {% if form.amount_choice.errors %}

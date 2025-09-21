@@ -135,10 +135,18 @@ def add_funds(request):
     except Exception:
         public_key = settings.STRIPE_PUBLISHABLE_KEY
     
+    # Bonus multiplier for UI
+    try:
+        from decimal import Decimal
+        bonus_multiplier = Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
+    except Exception:
+        bonus_multiplier = Decimal('1.20')
+
     return render(request, 'registration/add_funds.html', {
         'form': form,
         'payment_account': payment_account,
-        'stripe_public_key': public_key
+        'stripe_public_key': public_key,
+        'bonus_multiplier': f"{bonus_multiplier}"
     })
 
 

@@ -1,0 +1,327 @@
+=================================================================================================
+SUMMERFEST ADVANCED ANALYTICS - EXCEL FORMULAS & PIVOT TABLE CONFIGURATIONS
+=================================================================================================
+
+This file contains advanced Excel formulas and configurations to create the most comprehensive
+analytics possible from your Summerfest data. Copy and paste these formulas into your Excel
+workbook for maximum analytical power.
+
+=================================================================================================
+EXECUTIVE DASHBOARD FORMULAS
+=================================================================================================
+
+1. TOTAL UNIQUE FAMILIES:
+   =SUMPRODUCT(1/COUNTIF(Data.A:A,Data.A:A&""))
+
+2. AVERAGE FAMILY SIZE:
+   =COUNTIF(Data.A:A,"<>"&"")/SUMPRODUCT(1/COUNTIF(Data.A:A,Data.A:A&""))
+
+3. COMPLETION RATE:
+   =COUNTA(Data.A:A)/COUNTA(Data.B:B)*100
+
+4. REVENUE PER CHILD:
+   =SUM(Payments.B:B)/COUNTA(Data.A:A)
+
+5. REGISTRATION CONVERSION RATE:
+   =COUNTA(Registration.A:A)/COUNTA(Conversations.A:A)*100
+
+=================================================================================================
+ATTENDANCE ANALYSIS FORMULAS
+=================================================================================================
+
+6. DAILY ATTENDANCE RATE:
+   =COUNTIFS(Attendance.C:C,TODAY(),Attendance.D:D,"Present")/COUNTA(Data.A:A)*100
+
+7. PEAK HOUR ANALYSIS:
+   =MODE(HOUR(Attendance.E:E))
+
+8. AVERAGE SESSION DURATION:
+   =AVERAGE(Attendance.F:F-Attendance.E:E)*24
+
+9. REPEAT ATTENDANCE SCORE:
+   =SUMPRODUCT(--(COUNTIFS(Attendance.A:A,Attendance.A:A)>1))/COUNTA(Attendance.A:A)*100
+
+10. NO-SHOW RATE:
+    =COUNTIFS(Registration.A:A,"Registered",Attendance.A:A,"")/COUNTA(Registration.A:A)*100
+
+=================================================================================================
+DEMOGRAPHIC & GEOGRAPHIC ANALYSIS
+=================================================================================================
+
+11. POSTCODE DIVERSITY INDEX:
+    =1-SUMPRODUCT((COUNTIFS(Data.G:G,Data.G:G)/COUNTA(Data.G:G))^2)
+
+12. AVERAGE TRAVEL DISTANCE (Estimated):
+    =VLOOKUP(LEFT(Data.G2,2),PostcodeDistance,2,FALSE)
+
+13. SUBURB PENETRATION RATE:
+    =COUNTIF(Data.H:H,H2)/Population_Data!B2*100
+
+14. FAMILY SIZE DISTRIBUTION:
+    =FREQUENCY(COUNTIFS(Data.A:A,Data.A:A),{1;2;3;4;5;10})
+
+15. AGE DISTRIBUTION CURVE:
+    =NORM.DIST(YEAR(TODAY())-YEAR(Data.C2),5,2,FALSE)
+
+=================================================================================================
+HEALTH & SAFETY METRICS
+=================================================================================================
+
+16. MEDICAL NEEDS PREVALENCE:
+    =COUNTIF(Data.M:M,"Yes")/COUNTA(Data.M:M)*100
+
+17. DIETARY REQUIREMENTS BREAKDOWN:
+    =COUNTIFS(Data.N:N,"*gluten*")+COUNTIFS(Data.N:N,"*dairy*")+COUNTIFS(Data.N:N,"*nut*")
+
+18. ALLERGY RISK ASSESSMENT:
+    =IF(COUNTIFS(Data.O:O,"*anaphylaxis*")>0,"HIGH",IF(COUNTIFS(Data.O:O,"*allergy*")>5,"MEDIUM","LOW"))
+
+19. PHOTO CONSENT RATE:
+    =COUNTIF(Data.P:P,"Yes")/COUNTA(Data.P:P)*100
+
+20. EMERGENCY CONTACT COMPLETENESS:
+    =COUNTA(Data.Q:Q)/COUNTA(Data.A:A)*100
+
+=================================================================================================
+ENGAGEMENT & OUTREACH METRICS
+=================================================================================================
+
+21. MARKETING CHANNEL ROI:
+    =COUNTIFS(Data.R:R,"Facebook")/SUMPRODUCT(--(Data.R:R<>""))
+
+22. WORD-OF-MOUTH EFFECTIVENESS:
+    =COUNTIFS(Data.R:R,"*Friend*")/COUNTA(Data.R:R)*100
+
+23. CHURCH CONNECTION RATE:
+    =COUNTIFS(Data.S:S,"Yes")/COUNTA(Data.S:S)*100
+
+24. NEW FAMILY ACQUISITION:
+    =COUNTIFS(Data.S:S,"No")/COUNTA(Data.S:S)*100
+
+25. LIGHTHOUSE CONNECTION SCORE:
+    =COUNTIFS(Data.S:S,"Lighthouse")/COUNTIFS(Data.S:S,"Yes")*100
+
+=================================================================================================
+FINANCIAL ANALYSIS FORMULAS
+=================================================================================================
+
+26. REVENUE GROWTH RATE:
+    =((ThisWeek_Revenue-LastWeek_Revenue)/LastWeek_Revenue)*100
+
+27. PAYMENT METHOD PREFERENCE:
+    =INDEX(PaymentMethods,MODE(MATCH(Payments.D:D,PaymentMethods,0)))
+
+28. OUTSTANDING BALANCE AGING:
+    =SUMIFS(Payments.C:C,Payments.B:B,"<"&TODAY()-30)
+
+29. FAMILY PAYMENT BEHAVIOR SCORE:
+    =IF(COUNTIFS(Payments.A:A,A2)>2,"Regular",IF(COUNTIFS(Payments.A:A,A2)>0,"Occasional","None"))
+
+30. REVENUE PER SQUARE FOOT:
+    =SUM(Payments.C:C)/Facility_Size
+
+=================================================================================================
+TREND ANALYSIS & PREDICTIONS
+=================================================================================================
+
+31. REGISTRATION MOMENTUM:
+    =SLOPE(Registration.B:B,ROW(Registration.B:B))
+
+32. SEASONAL ADJUSTMENT FACTOR:
+    =AVERAGE(OFFSET(Data.A1,ROW()-7,0,7,1))/AVERAGE(Data.A:A)
+
+33. CAPACITY UTILIZATION:
+    =COUNTA(Data.A:A)/Maximum_Capacity*100
+
+34. GROWTH PROJECTION (Linear):
+    =FORECAST(COUNTA(Data.A:A)+1,Registration.B:B,ROW(Registration.B:B))
+
+35. CHURN RISK INDICATOR:
+    =IF(COUNTIFS(Attendance.A:A,A2,Attendance.C:C,"<"&TODAY()-7)>0,"At Risk","Active")
+
+=================================================================================================
+ADVANCED PIVOT TABLE CONFIGURATIONS
+=================================================================================================
+
+PIVOT TABLE 1: CLASS ANALYSIS MATRIX
+Rows: Class, Gender
+Columns: Medical Needs, Dietary Needs
+Values: Count of Children, Average Age
+
+PIVOT TABLE 2: GEOGRAPHIC HEAT MAP
+Rows: Postcode, Suburb
+Columns: Church Attendance
+Values: Count of Families, Sum of Children
+
+PIVOT TABLE 3: ATTENDANCE PATTERNS
+Rows: Date, Day of Week
+Columns: Class, Time Slot
+Values: Attendance Count, Duration Average
+
+PIVOT TABLE 4: ENGAGEMENT FUNNEL
+Rows: Marketing Source
+Columns: Registration Status, Attendance Status
+Values: Count, Conversion Rate
+
+PIVOT TABLE 5: FINANCIAL DASHBOARD
+Rows: Family Name, Payment Method
+Columns: Month, Week
+Values: Payment Amount, Balance
+
+=================================================================================================
+CONDITIONAL FORMATTING RULES
+=================================================================================================
+
+RULE 1: ATTENDANCE HEAT MAP
+Range: Attendance data
+Formula: =COUNTIFS($A:$A,$A2,$C:$C,">="&TODAY()-7)
+Format: Green for high attendance, Red for low
+
+RULE 2: MEDICAL PRIORITY
+Range: Medical needs column
+Formula: =SEARCH("severe",A2)
+Format: Red background for severe conditions
+
+RULE 3: BALANCE ALERTS
+Range: Payment balance column
+Formula: =A2<0
+Format: Red text for negative balances
+
+RULE 4: ENGAGEMENT SCORING
+Range: Contact attempts column
+Formula: =A2>3
+Format: Green for high engagement
+
+RULE 5: CAPACITY WARNINGS
+Range: Class size calculations
+Formula: =A2/B2>0.9
+Format: Yellow for near capacity, Red for over capacity
+
+=================================================================================================
+ADVANCED ANALYTICS FORMULAS (Array Formulas - Use Ctrl+Shift+Enter)
+=================================================================================================
+
+36. MULTI-CRITERIA ANALYSIS:
+    {=SUM((Data.Class="Minis")*(Data.Gender="Female")*(Data.Medical="Yes"))}
+
+37. COHORT ANALYSIS:
+    {=AVERAGE(IF(Data.Registration_Date<=DATE(2024,12,1),Data.Attendance_Count))}
+
+38. CORRELATION MATRIX:
+    {=CORREL(IF(Data.Church="Yes",1,0),IF(Data.Return="Yes",1,0))}
+
+39. PERCENTILE RANKING:
+    {=PERCENTRANK(Data.Family_Size,Data.Family_Size)}
+
+40. DYNAMIC RANGE ANALYSIS:
+    {=MAX(Data.Attendance)-MIN(Data.Attendance)}
+
+=================================================================================================
+POWER QUERY FORMULAS (For Data Transformation)
+=================================================================================================
+
+41. CLEAN PHONE NUMBERS:
+    = Table.TransformColumns(Data,{{"Phone", each Text.Select(_, {"0".."9"})}})
+
+42. EXTRACT POSTCODE:
+    = Table.AddColumn(Data, "Postcode", each Text.End([Address], 4))
+
+43. AGE CALCULATION:
+    = Table.AddColumn(Data, "Age", each Date.Year(DateTime.LocalNow()) - Date.Year([DOB]))
+
+44. ATTENDANCE FREQUENCY:
+    = Table.Group(Data, {"Child_Name"}, {{"Attendance_Count", each Table.RowCount(_), Int64.Type}})
+
+45. PAYMENT TOTALS:
+    = Table.Group(Data, {"Family_Name"}, {{"Total_Paid", each List.Sum([Amount]), type number}})
+
+=================================================================================================
+DASHBOARD VISUALIZATION FORMULAS
+=================================================================================================
+
+46. GAUGE CHART DATA (Completion Rate):
+    =MIN(Completion_Rate/100,1)
+
+47. TRAFFIC LIGHT INDICATOR:
+    =IF(KPI>Target,"🟢",IF(KPI>Target*0.8,"🟡","🔴"))
+
+48. TREND ARROWS:
+    =IF(Current>Previous,"⬆️",IF(Current<Previous,"⬇️","➡️"))
+
+49. SPARKLINE DATA:
+    =REPT("▓",INT(Value/MAX(Range)*10))&REPT("░",10-INT(Value/MAX(Range)*10))
+
+50. PROGRESS BARS:
+    =REPT("█",INT(Percentage*20/100))&REPT("▒",20-INT(Percentage*20/100))
+
+=================================================================================================
+STATISTICAL ANALYSIS FORMULAS
+=================================================================================================
+
+51. CONFIDENCE INTERVAL:
+    =CONFIDENCE.T(0.05,STDEV(Data),COUNT(Data))
+
+52. Z-SCORE ANALYSIS:
+    =(Value-AVERAGE(Range))/STDEV(Range)
+
+53. OUTLIER DETECTION:
+    =IF(ABS(Z_Score)>2,"Outlier","Normal")
+
+54. SEASONAL DECOMPOSITION:
+    =Value-TREND(Range,SEQUENCE(COUNT(Range)))-CYCLICAL_Component
+
+55. REGRESSION ANALYSIS:
+    =LINEST(Y_Values,X_Values,TRUE,TRUE)
+
+=================================================================================================
+CUSTOM FUNCTIONS (VBA Required)
+=================================================================================================
+
+56. WORKING DAYS BETWEEN:
+    Function WorkingDaysBetween(StartDate, EndDate)
+        WorkingDaysBetween = Application.WorksheetFunction.NetworkDays(StartDate, EndDate)
+    End Function
+
+57. DISTANCE CALCULATOR:
+    Function DistanceKM(Postcode1, Postcode2)
+        ' Custom distance calculation based on postcodes
+    End Function
+
+58. ENGAGEMENT SCORE:
+    Function EngagementScore(Attendance, Payments, Communications)
+        EngagementScore = (Attendance * 0.5) + (Payments * 0.3) + (Communications * 0.2)
+    End Function
+
+=================================================================================================
+DATA QUALITY CHECKS
+=================================================================================================
+
+59. DUPLICATE DETECTION:
+    =COUNTIFS(Data.Name,Data.Name[[@Name]],Data.DOB,Data.DOB[[@DOB]])>1
+
+60. COMPLETENESS SCORE:
+    =COUNTA(Data[@])/COLUMNS(Data)*100
+
+61. CONSISTENCY CHECK:
+    =IF(ISTEXT(Data.Postcode),"Text","Number")
+
+62. VALIDATION RULES:
+    =AND(LEN(Phone)>=10,ISNUMBER(Age),Age>0,Age<18)
+
+=================================================================================================
+USAGE INSTRUCTIONS:
+=================================================================================================
+
+1. Create an Excel workbook (.xlsm format to support macros)
+2. Import your CSV data into a sheet named "Data"
+3. Create additional sheets for each analysis category
+4. Copy relevant formulas into the appropriate sheets
+5. Set up pivot tables using the configurations above
+6. Apply conditional formatting rules for visual insights
+7. Run the VBA code for automated report generation
+8. Use Power Query for data cleaning and transformation
+
+This comprehensive set of formulas and configurations will provide you with
+every conceivable metric and analysis from your Summerfest data!
+
+=================================================================================================

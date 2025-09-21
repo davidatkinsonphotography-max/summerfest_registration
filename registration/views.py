@@ -13,7 +13,7 @@ from django.utils.crypto import get_random_string
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .models import ParentProfile, Child, Attendance, TeacherProfile
-from .forms import ParentRegistrationForm, ChildRegistrationForm, AttendanceForm, CheckoutForm, ManualSignInForm, PasswordResetRequestForm
+from .forms import ParentRegistrationForm, ChildRegistrationForm, AttendanceForm, CheckoutForm, ManualSignInForm, PasswordResetRequestForm, PasswordChangeForm
 from .test_data import create_test_parent, create_test_children, create_test_teacher, create_test_admin, get_test_credentials, cleanup_test_data
 
 def send_qr_code_email(child, parent_profile):
@@ -497,30 +497,46 @@ def profile_edit(request):
         messages.error(request, 'Please complete your registration first.')
         return redirect('parent_register')
     
+    # Initialize forms
+    profile_form = None
+    password_form = PasswordChangeForm(request.user)
+    
     if request.method == 'POST':
-        # Create a form instance with the current profile data
-        form_data = request.POST.copy()
-        form_data['username'] = request.user.username
-        
-        # For profile editing, we don't want to change password
-        form = ParentRegistrationForm(form_data, instance=request.user)
-        form.fields.pop('password1', None)
-        form.fields.pop('password2', None)
-        
-        if form.is_valid():
-            # Update parent profile fields
-            for field in ['first_name', 'last_name', 'street_address', 'city', 'postcode',
-                         'email', 'phone_number', 'how_heard_about', 'additional_information',
-                         'attends_church_regularly', 'which_church', 'emergency_contact_name',
-                         'emergency_contact_phone', 'emergency_contact_relationship']:
-                if field in form.cleaned_data:
-                    setattr(parent_profile, field, form.cleaned_data[field])
+        # Check which form was submitted
+        if 'update_profile' in request.POST:
+            # Handle profile update
+            form_data = request.POST.copy()
+            form_data['username'] = request.user.username
             
-            parent_profile.save()
-            messages.success(request, 'Your profile has been updated!')
-            return redirect('dashboard')
-    else:
-        # Pre-populate form with existing data
+            # For profile editing, we don't want to change password
+            profile_form = ParentRegistrationForm(form_data, instance=request.user)
+            profile_form.fields.pop('password1', None)
+            profile_form.fields.pop('password2', None)
+            
+            if profile_form.is_valid():
+                # Update parent profile fields
+                for field in ['first_name', 'last_name', 'street_address', 'city', 'postcode',
+                             'email', 'phone_number', 'how_heard_about', 'additional_information',
+                             'attends_church_regularly', 'which_church', 'emergency_contact_name',
+                             'emergency_contact_phone', 'emergency_contact_relationship']:
+                    if field in profile_form.cleaned_data:
+                        setattr(parent_profile, field, profile_form.cleaned_data[field])
+                
+                parent_profile.save()
+                messages.success(request, 'Your profile has been updated!')
+                return redirect('dashboard')
+        
+        elif 'change_password' in request.POST:
+            # Handle password change
+            password_form = PasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                request.user.set_password(password_form.cleaned_data['new_password1'])
+                request.user.save()
+                messages.success(request, 'Your password has been changed successfully!')
+                return redirect('dashboard')
+    
+    # Initialize profile form with existing data if not already set
+    if profile_form is None:
         initial_data = {
             'username': request.user.username,
             'first_name': parent_profile.first_name,
@@ -538,11 +554,14 @@ def profile_edit(request):
             'emergency_contact_phone': parent_profile.emergency_contact_phone,
             'emergency_contact_relationship': parent_profile.emergency_contact_relationship,
         }
-        form = ParentRegistrationForm(initial=initial_data)
-        form.fields.pop('password1', None)
-        form.fields.pop('password2', None)
+        profile_form = ParentRegistrationForm(initial=initial_data)
+        profile_form.fields.pop('password1', None)
+        profile_form.fields.pop('password2', None)
     
-    return render(request, 'registration/profile_edit.html', {'form': form})
+    return render(request, 'registration/profile_edit.html', {
+        'profile_form': profile_form,
+        'password_form': password_form
+    })
 
 
 def site_map(request):

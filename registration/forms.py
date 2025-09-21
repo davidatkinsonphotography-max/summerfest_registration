@@ -629,6 +629,63 @@ class ParentInteractionForm(forms.ModelForm):
         return cleaned_data
 
 
+class PasswordChangeForm(forms.Form):
+    """Form for changing user password"""
+    
+    current_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        label="Current Password"
+    )
+    
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        label="New Password"
+    )
+    
+    new_password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        label="Confirm New Password"
+    )
+    
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+    
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get('current_password')
+        if not self.user.check_password(current_password):
+            raise ValidationError("Current password is incorrect.")
+        return current_password
+    
+    def clean_new_password1(self):
+        password = self.cleaned_data.get('new_password1')
+        if password:
+            # Check minimum length
+            if len(password) < 8:
+                raise ValidationError("Password must be at least 8 characters long.")
+            
+            # Check for at least one capital letter
+            if not re.search(r'[A-Z]', password):
+                raise ValidationError("Password must contain at least 1 capital letter (A-Z).")
+            
+            # Check for at least one number
+            if not re.search(r'\d', password):
+                raise ValidationError("Password must contain at least 1 number (0-9).")
+        
+        return password
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password1 = cleaned_data.get('new_password1')
+        new_password2 = cleaned_data.get('new_password2')
+        
+        if new_password1 and new_password2:
+            if new_password1 != new_password2:
+                raise ValidationError("New passwords don't match.")
+        
+        return cleaned_data
+
+
 class PasswordResetRequestForm(forms.Form):
     """Form for requesting password reset via email"""
     

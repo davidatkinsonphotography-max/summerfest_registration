@@ -54,6 +54,7 @@ urlpatterns = [
     
     # site map for testing functionality
     path("sitemap/", views.site_map, name="site_map"),
+    path("sitemap/stripe-mode/<str:mode>/", views.set_stripe_mode, name="set_stripe_mode"),
 
     # Label preview (linked from sitemap only)
     path('labels/preview/', views.label_preview, name='label_preview'),

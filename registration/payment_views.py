@@ -17,8 +17,7 @@ from decimal import Decimal
 from .models import ParentProfile, PaymentAccount, PaymentTransaction, DailyAttendanceCharge
 from .forms import AddFundsForm, ManualPaymentForm
 
-# Configure Stripe
-stripe.api_key = settings.STRIPE_SECRET_KEY
+# Stripe API key will be set per request using stripe_utils
 
 
 def get_or_create_payment_account(parent_profile):
@@ -77,6 +76,20 @@ def add_funds(request):
         if form.is_valid():
             amount = form.get_amount()
             
+            # Determine Stripe keys/mode
+            from .stripe_utils import get_stripe_mode_from_request, get_stripe_keys
+            mode = get_stripe_mode_from_request(request)
+            keys = get_stripe_keys(mode)
+            stripe.api_key = keys['secret']
+
+            # Compute credited amount for display
+            try:
+                from decimal import Decimal
+                bonus_multiplier = Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
+            except Exception:
+                bonus_multiplier = Decimal('1.20')
+            credited_amount = (amount * bonus_multiplier).quantize(Decimal('0.01'))
+            
             # Create Stripe checkout session
             try:
                 checkout_session = stripe.checkout.Session.create(
@@ -91,7 +104,7 @@ def add_funds(request):
                             'currency': settings.PAYMENT_CURRENCY.lower(),
                             'product_data': {
                                 'name': 'Summerfest Account Credit',
-                                'description': f'Add ${amount} to your Summerfest account',
+                                'description': f'You pay ${amount}, we will credit ${credited_amount} to your Summerfest account',
                             },
                             'unit_amount': int(amount * 100),  # Stripe uses cents
                         },
@@ -103,7 +116,8 @@ def add_funds(request):
                     metadata={
                         'parent_profile_id': parent_profile.id,
                         'amount': str(amount),
-                        'payment_type': 'add_funds'
+                        'payment_type': 'add_funds',
+                        'stripe_mode': mode
                     }
                 )
                 return redirect(checkout_session.url)
@@ -112,10 +126,19 @@ def add_funds(request):
     else:
         form = AddFundsForm()
     
+    # Provide current mode/publishable key for display if needed
+    try:
+        from .stripe_utils import get_stripe_mode_from_request, get_stripe_keys
+        mode = get_stripe_mode_from_request(request)
+        keys = get_stripe_keys(mode)
+        public_key = keys['publishable']
+    except Exception:
+        public_key = settings.STRIPE_PUBLISHABLE_KEY
+    
     return render(request, 'registration/add_funds.html', {
         'form': form,
         'payment_account': payment_account,
-        'stripe_public_key': settings.STRIPE_PUBLISHABLE_KEY
+        'stripe_public_key': public_key
     })
 
 
@@ -128,8 +151,24 @@ def payment_success(request):
         return redirect('payment_dashboard')
     
     try:
-        # Retrieve the session from Stripe
-        session = stripe.checkout.Session.retrieve(session_id)
+        # Retrieve session with correct Stripe key by mode stored in metadata
+        from .stripe_utils import get_stripe_keys
+        # We need a temporary key to retrieve the session. Try both keys if needed.
+        keys_candidates = [
+            get_stripe_keys('live'),
+            get_stripe_keys('test')
+        ]
+        session = None
+        for keys in keys_candidates:
+            try:
+                stripe.api_key = keys['secret']
+                session = stripe.checkout.Session.retrieve(session_id)
+                break
+            except Exception:
+                continue
+        if not session:
+            messages.error(request, 'Could not verify payment session.')
+            return redirect('payment_dashboard')
         
         if session.payment_status == 'paid':
             # Get parent profile from metadata
@@ -294,18 +333,19 @@ def payment_lookup(request):
 @csrf_exempt
 @require_POST
 def stripe_webhook(request):
-    """Handle Stripe webhooks"""
+    """Handle Stripe webhooks for both live and test modes."""
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     
+    # Try verifying with live first, then test
+    event = None
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-        )
-    except ValueError:
-        return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError:
-        return HttpResponse(status=400)
+        event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
+    except Exception:
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, getattr(settings, 'STRIPE_WEBHOOK_SECRET_TEST', ''))
+        except Exception:
+            return HttpResponse(status=400)
     
     # Handle the event
     if event['type'] == 'checkout.session.completed':

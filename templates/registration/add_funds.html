@@ -31,23 +31,25 @@
                         
                         <div class="mb-4">
                             <label class="form-label"><strong>Select amount to add:</strong></label>
-                            <div class="row">
+                            <div>
                                 {% for value, label in form.amount_choice.field.choices %}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="amount_choice" 
-                                                   id="amount_{{ value }}" value="{{ value }}" 
-                                                   {% if value == 'custom' %}onchange="toggleCustomAmount()"{% endif %}>
-                                            <label class="form-check-label" for="amount_{{ value }}">
-                                                {{ label }}
-                                            </label>
-                                        </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="amount_choice" 
+                                               id="amount_{{ value }}" value="{{ value }}" 
+                                               {% if value == 'custom' %}onchange="toggleCustomAmount()"{% endif %}>
+                                        <label class="form-check-label" for="amount_{{ value }}">
+                                            {{ label }}
+                                        </label>
                                     </div>
                                 {% endfor %}
                             </div>
                             {% if form.amount_choice.errors %}
                                 <div class="text-danger small">{{ form.amount_choice.errors }}</div>
                             {% endif %}
+                        </div>
+
+                        <div class="alert alert-success mb-4">
+                            <i class="bi bi-gift"></i> Pay online and get bonus credit! We currently credit 1.2x your payment amount to your balance (e.g., pay $15 and we credit $18).
                         </div>
 
                         <!-- Custom Amount Field -->

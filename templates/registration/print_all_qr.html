@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Print All QR Codes - Summerfest{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-qr-code"></i> QR Codes for {{ parent_profile.first_name }} {{ parent_profile.last_name }}</h3>
+    <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+  </div>
+
+  {% if children %}
+  <div class="row" id="qr-grid">
+    {% for child in children %}
+    <div class="col-md-4 mb-4">
+      <div class="card border">
+        <div class="card-body text-center">
+          <h5 class="card-title">{{ child.first_name }} {{ child.last_name }}</h5>
+          <div class="mb-2"><span class="badge bg-secondary">{{ child.get_child_class_display }}</span></div>
+          {% if child.qr_code_image %}
+            <img src="{{ child.qr_code_image.url }}" alt="QR Code for {{ child.first_name }}" class="img-fluid" style="max-width: 220px; height: auto;">
+          {% else %}
+            <div class="bg-light p-4"><i class="bi bi-qr-code" style="font-size: 2rem; color: #ccc;"></i></div>
+          {% endif %}
+          <div class="small text-muted mt-2"><code>summerfest_child_{{ child.qr_code_id }}</code></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info">No children registered.</div>
+  {% endif %}
+</div>
+
+<style>
+@media print {
+  .btn, .navbar, footer { display: none !important; }
+  .card { page-break-inside: avoid; }
+}
+</style>
+{% endblock %}

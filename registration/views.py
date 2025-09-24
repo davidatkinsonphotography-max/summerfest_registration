@@ -312,10 +312,12 @@ def attendance_scan(request):
         if form.is_valid():
             child = form.cleaned_data['qr_code_data']
             
-            # Check if child is already checked in today
+            # Check if child is already checked in today using AEST timezone
+            from .payment_calculator import PaymentCalculator
+            today = PaymentCalculator.get_current_aest_date()
             today_attendance = Attendance.objects.filter(
                 child=child,
-                date=timezone.now().date(),
+                date=today,
                 time_out__isnull=True
             ).first()
             
@@ -425,8 +427,9 @@ def teacher_dashboard(request):
     else:  # default to first_name
         children = children.order_by('first_name', 'last_name')
     
-    # Get today's attendance
-    today = timezone.now().date()
+    # Get today's attendance using AEST timezone for consistency
+    from .payment_calculator import PaymentCalculator
+    today = PaymentCalculator.get_current_aest_date()
     attendance_today = Attendance.objects.filter(date=today)
     
     # Organize children by class and attendance status
@@ -464,8 +467,9 @@ def checkout_child(request, child_id):
     """Check out a child"""
     child = get_object_or_404(Child, id=child_id)
     
-    # Find today's attendance record
-    today = timezone.now().date()
+    # Find today's attendance record using AEST timezone
+    from .payment_calculator import PaymentCalculator
+    today = PaymentCalculator.get_current_aest_date()
     attendance = get_object_or_404(Attendance, child=child, date=today, time_out__isnull=True)
     
     if request.method == 'POST':
@@ -869,8 +873,9 @@ def manual_checkin_child(request, child_id):
     try:
         child = get_object_or_404(Child, id=child_id)
         
-        # Check if child is already checked in today
-        today = timezone.now().date()
+        # Check if child is already checked in today using AEST timezone
+        from .payment_calculator import PaymentCalculator
+        today = PaymentCalculator.get_current_aest_date()
         today_attendance = Attendance.objects.filter(
             child=child,
             date=today,
@@ -979,8 +984,9 @@ def change_child_status(request, child_id):
         data = json.loads(request.body)
         new_status = data.get('status')
         
-        # Find today's attendance record
-        today = timezone.now().date()
+        # Find today's attendance record using AEST timezone
+        from .payment_calculator import PaymentCalculator
+        today = PaymentCalculator.get_current_aest_date()
         attendance = Attendance.objects.filter(
             child=child,
             date=today
@@ -1029,7 +1035,9 @@ def admin_dashboard(request):
     if selected_class and selected_class in ['creche', 'tackers', 'minis', 'nitro', '56ers']:
         children = children.filter(child_class=selected_class)
     
-    today = timezone.now().date()
+    # Use AEST timezone for consistency
+    from .payment_calculator import PaymentCalculator
+    today = PaymentCalculator.get_current_aest_date()
     attendance_today = Attendance.objects.filter(date=today)
     
     # Organize children by attendance status

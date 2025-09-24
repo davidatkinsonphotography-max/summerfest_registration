@@ -17,7 +17,7 @@ class PaymentCalculator:
     """Handles payment calculation for check-ins based on simplified rules.
 
     New logic:
-    - Charge $6 per child per day (Wednesday–Saturday only)
+    - Charge $6 per child per day (Tuesday–Saturday)
     - Cap at 2 children per family per day ($12/day max)
     - Sunday is free
     - No weekly caps or thresholds
@@ -26,7 +26,8 @@ class PaymentCalculator:
     DAILY_CHILD_RATE = Decimal('6.00')
     DAILY_FAMILY_CAP = Decimal('12.00')  # Effectively 2 children max per day
     
-    CHARGE_WEEKDAYS = {2, 3, 4, 5}  # Wed(2)–Sat(5) only
+    # Python weekday(): Mon=0, Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6
+    CHARGE_WEEKDAYS = {0, 1, 2, 3, 4, 5}  # Mon(0)–Sat(5) - Sunday(6) is free
     
     @classmethod
     def get_current_aest_datetime(cls) -> datetime:
@@ -111,10 +112,10 @@ class PaymentCalculator:
         if cls.has_child_checked_in_today(child, check_date):
             return Decimal('0.00'), 'Already checked in today'
 
-        # Sunday is free; only charge Wed–Sat
+        # Sunday is free; charge Mon-Sat
         weekday = check_date.weekday()
         if weekday not in cls.CHARGE_WEEKDAYS:
-            return Decimal('0.00'), 'No charge today'
+            return Decimal('0.00'), 'Sunday - No charge today'
 
         # Count how many charged children already today for this family
         daily_attendance = cls.get_daily_attendance_for_family(parent_profile, check_date)

@@ -8,7 +8,7 @@
     <div class="row">
         <div class="col-12">
             <h2 class="mb-4">
-                <i class="bi bi-people"></i> Class Management - {{ today|date:"M j, Y" }}
+                <i class="bi bi-people"></i> Class Management - {{ today|date:"M j, Y" }} <span id="current-time" class="fw-normal text-muted" style="font-size: 0.7em;"></span>
             </h2>
         </div>
     </div>
@@ -90,22 +90,25 @@
                                                 <div class="d-grid">
                                                     {% if not data.attendance %}
                                                         <!-- Not yet arrived - allow check-in -->
-                                                        <button class="btn btn-success d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px;" 
-                                                                onclick="manualCheckIn({{ data.child.id }}, '{{ data.child.first_name }} {{ data.child.last_name }}')">
+                                                        <button class="btn btn-success d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px; touch-action: manipulation;" 
+                                                                onclick="manualCheckIn({{ data.child.id }}, '{{ data.child.first_name }} {{ data.child.last_name }}')"
+                                                                ontouchend="manualCheckIn({{ data.child.id }}, '{{ data.child.first_name }} {{ data.child.last_name }}')">
                                                             <i class="bi bi-box-arrow-in-right" style="font-size: 16px;"></i>
                                                             <span style="margin-top: 4px;">Check In</span>
                                                         </button>
                                                     {% elif data.attendance.status == 'checked_in' %}
                                                         <!-- Checked in - allow to go to class -->
-                                                        <button class="btn btn-primary d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px;" 
-                                                                onclick="changeStatus({{ data.child.id }}, 'in_class', '{{ data.child.first_name }} {{ data.child.last_name }}')">
+                                                        <button class="btn btn-primary d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px; touch-action: manipulation;" 
+                                                                onclick="changeStatus({{ data.child.id }}, 'in_class', '{{ data.child.first_name }} {{ data.child.last_name }}')"
+                                                                ontouchend="changeStatus({{ data.child.id }}, 'in_class', '{{ data.child.first_name }} {{ data.child.last_name }}')">
                                                             <i class="bi bi-book" style="font-size: 16px;"></i>
                                                             <span style="margin-top: 4px;">In Class</span>
                                                         </button>
                                                     {% elif data.attendance.status == 'in_class' %}
                                                         <!-- In class - allow pickup -->
-                                                        <button class="btn btn-warning d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px;" 
-                                                                onclick="changeStatus({{ data.child.id }}, 'picked_up', '{{ data.child.first_name }} {{ data.child.last_name }}')">
+                                                        <button class="btn btn-warning d-flex align-items-center justify-content-center" style="height: 70px; flex-direction: column; font-size: 12px; touch-action: manipulation;" 
+                                                                onclick="changeStatus({{ data.child.id }}, 'picked_up', '{{ data.child.first_name }} {{ data.child.last_name }}')"
+                                                                ontouchend="changeStatus({{ data.child.id }}, 'picked_up', '{{ data.child.first_name }} {{ data.child.last_name }}')">
                                                             <i class="bi bi-person-check" style="font-size: 16px;"></i>
                                                             <span style="margin-top: 4px;">Picked Up</span>
                                                         </button>
@@ -247,6 +250,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const classFilter = document.getElementById('classFilter');
     const childRows = document.querySelectorAll('.child-row');
     
+    // Update current time display
+    function updateCurrentTime() {
+        const now = new Date();
+        // Convert to Sydney time (UTC+10 or UTC+11 depending on DST)
+        const sydneyTime = new Date(now.toLocaleString("en-US", {timeZone: "Australia/Sydney"}));
+        const timeString = sydneyTime.toLocaleTimeString('en-AU', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            timeElement.textContent = `(${timeString})`;
+        }
+    }
+    
+    // Update time immediately and then every minute
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 60000);
+    
     // Filter functionality
     if (classFilter) {
         classFilter.addEventListener('change', function() {
@@ -298,9 +321,15 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCounts();
 });
 
-// Manual check-in function
+// Manual check-in function with improved mobile support
 function manualCheckIn(childId, childName) {
     if (confirm(`Check in ${childName}?`)) {
+        // Add loading state
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i><span style="margin-top: 4px;">Loading...</span>';
+        button.disabled = true;
+        
         fetch(`/manual_checkin/${childId}/`, {
             method: 'POST',
             headers: {
@@ -316,18 +345,27 @@ function manualCheckIn(childId, childName) {
                 reloadWithFilter();
             } else if (data.status === 'payment_required') {
                 alert(`Payment Required: ${data.message}\n\nCurrent Balance: ${data.current_balance}\nRequired: ${data.required_charge}\nShortfall: ${data.shortfall}`);
+                // Restore button state
+                button.innerHTML = originalText;
+                button.disabled = false;
             } else {
                 alert(data.message || 'An error occurred');
+                // Restore button state
+                button.innerHTML = originalText;
+                button.disabled = false;
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('An error occurred while checking in the child.');
+            // Restore button state
+            button.innerHTML = originalText;
+            button.disabled = false;
         });
     }
 }
 
-// Status change function
+// Status change function with improved mobile support
 function changeStatus(childId, newStatus, childName) {
     const statusNames = {
         'in_class': 'In Class',
@@ -335,6 +373,12 @@ function changeStatus(childId, newStatus, childName) {
     };
     
     if (confirm(`Change ${childName} status to ${statusNames[newStatus]}?`)) {
+        // Add loading state
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i><span style="margin-top: 4px;">Loading...</span>';
+        button.disabled = true;
+        
         fetch(`/change_status/${childId}/`, {
             method: 'POST',
             headers: {
@@ -350,11 +394,17 @@ function changeStatus(childId, newStatus, childName) {
                 reloadWithFilter();
             } else {
                 alert(data.message || 'An error occurred');
+                // Restore button state
+                button.innerHTML = originalText;
+                button.disabled = false;
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('An error occurred while updating status.');
+            // Restore button state
+            button.innerHTML = originalText;
+            button.disabled = false;
         });
     }
 }

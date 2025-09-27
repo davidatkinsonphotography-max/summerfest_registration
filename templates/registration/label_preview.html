@@ -201,7 +201,7 @@
 }
 
 .surname { 
-  color: #666; 
+  color: #bfbfbf; 
   margin: 1mm 0; 
   text-transform: uppercase; 
   white-space: nowrap;
@@ -233,12 +233,12 @@
 }
 
 .icon.no { 
-  color: #999; /* 20% grey for "No" - still visible but light */
+  color: #bfbfbf; /* 20% grey for "No" - still visible but light */
 }
 
 .icon svg {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 
@@ -291,8 +291,8 @@ function updateLabelSizes() {
       firstName.style.lineHeight = `${8 * fontScale}mm`;
     }
     if (surname) {
-      surname.style.fontSize = `${6 * fontScale}mm`;
-      surname.style.lineHeight = `${6 * fontScale}mm`;
+      surname.style.fontSize = `${3 * fontScale}mm`;
+      surname.style.lineHeight = `${3 * fontScale}mm`;
     }
     if (className) {
       className.style.fontSize = `${7 * fontScale}mm`;

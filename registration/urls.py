@@ -61,6 +61,14 @@ urlpatterns = [
 
     # Label preview (linked from sitemap only)
     path('labels/preview/', views.label_preview, name='label_preview'),
+    path('labels/save-settings/', views.save_label_settings, name='save_label_settings'),
+    
+    # API endpoints for label settings
+    path('api/label-settings/', views.api_label_settings, name='api_label_settings'),
+    path('api/toggle-printing/', views.api_toggle_printing, name='api_toggle_printing'),
+    
+    # Manual label printing
+    path('labels/print/<int:child_id>/', views.print_child_label, name='print_child_label'),
     
     # Payment system
     path('payment/dashboard/', payment_dashboard, name='payment_dashboard'),

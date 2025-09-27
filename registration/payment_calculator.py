@@ -6,9 +6,12 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal
 from typing import Tuple, Dict, List
 import pytz
+import logging
 from django.db import transaction
 from django.db.models import Sum, Q
 from .models import ParentProfile, Child, Attendance, PaymentTransaction
+
+logger = logging.getLogger(__name__)
 
 # Define timezone
 AEST = pytz.timezone('Australia/Sydney')  # UTC+10 with DST handling
@@ -179,6 +182,17 @@ class PaymentCalculator:
             
             # Refresh the payment account to ensure we have the latest balance
             payment_account.refresh_from_db()
+        
+        # Auto-print label if enabled
+        try:
+            from .label_printer import print_child_label_on_checkin
+            print_success = print_child_label_on_checkin(child)
+            if print_success:
+                logger.info(f"Auto-printed label for {child.first_name} {child.last_name}")
+            else:
+                logger.warning(f"Failed to auto-print label for {child.first_name} {child.last_name}")
+        except Exception as e:
+            logger.error(f"Error during auto-print for {child.first_name} {child.last_name}: {e}")
         
         return attendance, charge_amount, charge_reason
     

@@ -166,6 +166,31 @@
         </div>
     </div>
 
+    <!-- Label Printing Toggle -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-printer"></i> Label Printing Settings</h3>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="mb-1">Auto-print on check-in: <strong><span id="printing-status">Loading...</span></strong></div>
+                        <small class="text-muted">Automatically print child labels when they are checked in using Brother QL-700</small>
+                    </div>
+                    <div>
+                        <a href="/labels/preview/" class="btn btn-outline-info btn-sm me-2">
+                            <i class="bi bi-gear"></i> Configure Labels
+                        </a>
+                        <button id="toggle-printing" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-toggle-off"></i> Toggle Printing
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- URL Groups by Role -->
     <div class="row">
         <div class="col-12">
@@ -323,6 +348,59 @@ document.querySelectorAll('code[onclick]').forEach(function(element) {
 function showCopyToast() {
     // Simple alert for now - could be enhanced with Bootstrap toast
     // alert('Copied to clipboard!');
+}
+
+// Label printing toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Load current printing status
+    fetch('/api/label-settings/')
+        .then(response => response.json())
+        .then(data => {
+            updatePrintingStatus(data.auto_print_on_checkin);
+        })
+        .catch(error => {
+            console.error('Error loading label settings:', error);
+            document.getElementById('printing-status').textContent = 'Error loading';
+        });
+
+    // Handle printing toggle
+    document.getElementById('toggle-printing').addEventListener('click', function() {
+        fetch('/api/toggle-printing/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updatePrintingStatus(data.auto_print_on_checkin);
+            } else {
+                alert('Error toggling printing status');
+            }
+        })
+        .catch(error => {
+            console.error('Error toggling printing:', error);
+            alert('Error toggling printing status');
+        });
+    });
+});
+
+function updatePrintingStatus(isEnabled) {
+    const statusElement = document.getElementById('printing-status');
+    const toggleButton = document.getElementById('toggle-printing');
+    
+    if (isEnabled) {
+        statusElement.textContent = 'ON';
+        statusElement.className = 'text-success';
+        toggleButton.innerHTML = '<i class="bi bi-toggle-on"></i> Disable Printing';
+        toggleButton.className = 'btn btn-success btn-sm';
+    } else {
+        statusElement.textContent = 'OFF';
+        statusElement.className = 'text-muted';
+        toggleButton.innerHTML = '<i class="bi bi-toggle-off"></i> Enable Printing';
+        toggleButton.className = 'btn btn-outline-primary btn-sm';
+    }
 }
 </script>
 {% endblock %}

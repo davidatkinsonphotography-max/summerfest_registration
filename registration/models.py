@@ -716,16 +716,39 @@ class ParentInteraction(models.Model):
             if self.manual_children_info:
                 return [{'name': 'Manual Entry', 'class': self.manual_children_info}]
             return []
+
+
+class LabelSettings(models.Model):
+    """Settings for label printing and preview"""
+    
+    # Label dimensions (in mm)
+    label_width = models.IntegerField(default=50, help_text="Label width in millimeters")
+    label_height = models.IntegerField(default=38, help_text="Label height in millimeters")
+    
+    # Font scaling
+    font_scale = models.FloatField(default=1.0, help_text="Font scale multiplier")
+    
+    # Printing settings
+    auto_print_on_checkin = models.BooleanField(default=False, help_text="Automatically print labels when children are checked in")
+    printer_name = models.CharField(max_length=200, blank=True, help_text="Name of the printer for automatic printing")
+    
+    # Label content settings
+    show_medical_icon = models.BooleanField(default=True, help_text="Show medical needs icon")
+    show_dietary_icon = models.BooleanField(default=True, help_text="Show dietary needs icon")
+    show_photo_icon = models.BooleanField(default=True, help_text="Show photo consent icon")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Label Settings"
+        verbose_name_plural = "Label Settings"
+    
+    def __str__(self):
+        return f"Label Settings ({self.label_width}mm × {self.label_height}mm)"
     
     @classmethod
-    def get_all_interactions_for_person(cls, parent_profile=None, manual_name=None):
-        """Get all interactions for a specific person"""
-        if parent_profile:
-            return cls.objects.filter(parent_profile=parent_profile).order_by('created_at')
-        elif manual_name:
-            first_name, last_name = manual_name.split(' ', 1) if ' ' in manual_name else (manual_name, '')
-            return cls.objects.filter(
-                manual_first_name__iexact=first_name,
-                manual_last_name__iexact=last_name
-            ).order_by('created_at')
-        return cls.objects.none()
+    def get_settings(cls):
+        """Get the current label settings, creating default if none exist"""
+        settings, created = cls.objects.get_or_create(pk=1)
+        return settings

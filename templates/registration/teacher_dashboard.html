@@ -117,6 +117,17 @@
                                                         <span class="border border-dark text-dark d-flex align-items-center justify-content-center" style="height: 70px; border-radius: 0.375rem; font-weight: bold;">Complete</span>
                                                     {% endif %}
                                                 </div>
+                                                
+                                                <!-- Print Label Button (always visible) -->
+                                                <div class="mt-2">
+                                                    <a href="{% url 'print_child_label' data.child.id %}" 
+                                                       class="btn btn-outline-info btn-sm d-flex align-items-center justify-content-center" 
+                                                       style="height: 30px; font-size: 10px; touch-action: manipulation;"
+                                                       title="Print label for {{ data.child.first_name }} {{ data.child.last_name }}">
+                                                        <i class="bi bi-printer" style="font-size: 12px;"></i>
+                                                        <span style="margin-left: 2px;">Print</span>
+                                                    </a>
+                                                </div>
                                             </td>
                                             
                                             <!-- Current Balance Column -->

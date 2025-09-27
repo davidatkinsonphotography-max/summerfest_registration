@@ -90,23 +90,166 @@ def home(request):
 
 
 def label_preview(request):
-    """Preview printable child labels (3cm x 5cm) for layout testing."""
-    # Sample data to render a variety of cases
-    samples = [
-        {
-            'first_name': 'Oliver', 'last_name': 'SMITH', 'class_display': 'Minis',
-            'medical': True, 'dietary': False, 'photo': True
-        },
-        {
-            'first_name': 'Amelia', 'last_name': 'O’REILLY', 'class_display': 'Nitro',
-            'medical': False, 'dietary': True, 'photo': True
-        },
-        {
-            'first_name': 'Noah', 'last_name': 'LEE', 'class_display': '56ers',
-            'medical': True, 'dietary': True, 'photo': False
-        },
-    ]
-    return render(request, 'registration/label_preview.html', {'samples': samples})
+    """Preview printable child labels for layout testing."""
+    from .models import LabelSettings
+    
+    # Get label settings
+    label_settings = LabelSettings.get_settings()
+    
+    # Get all children for preview
+    from .models import Child
+    children = Child.objects.all().order_by('first_name', 'last_name')
+    
+    # Convert to preview format
+    samples = []
+    for child in children:
+        samples.append({
+            'id': child.id,
+            'first_name': child.first_name,
+            'last_name': child.last_name,
+            'class_display': child.get_class_short_name(),
+            'medical': child.has_medical_needs,
+            'dietary': child.has_dietary_needs,
+            'photo': child.photo_consent
+        })
+    
+    # Add some sample data if no real children exist
+    if not samples:
+        samples = [
+            {
+                'id': 'sample1',
+                'first_name': 'Oliver', 'last_name': 'SMITH', 'class_display': 'Minis',
+                'medical': True, 'dietary': False, 'photo': True
+            },
+            {
+                'id': 'sample2',
+                'first_name': 'Amelia', 'last_name': "O'REILLY", 'class_display': 'Nitro',
+                'medical': False, 'dietary': True, 'photo': True
+            },
+            {
+                'id': 'sample3',
+                'first_name': 'Noah', 'last_name': 'LEE', 'class_display': '56ers',
+                'medical': True, 'dietary': True, 'photo': False
+            },
+        ]
+    
+    return render(request, 'registration/label_preview.html', {
+        'samples': samples,
+        'label_settings': label_settings
+    })
+
+
+def save_label_settings(request):
+    """Save label settings from the preview page."""
+    if request.method == 'POST':
+        from .models import LabelSettings
+        
+        settings = LabelSettings.get_settings()
+        
+        # Update settings from form data
+        settings.label_width = int(request.POST.get('label_width', 50))
+        settings.label_height = int(request.POST.get('label_height', 38))
+        settings.font_scale = float(request.POST.get('font_scale', 1.0))
+        settings.auto_print_on_checkin = request.POST.get('auto_print_on_checkin') == 'on'
+        settings.printer_name = request.POST.get('printer_name', '')
+        
+        # Icon visibility settings
+        settings.show_medical_icon = request.POST.get('show_medical_icon') == 'on'
+        settings.show_dietary_icon = request.POST.get('show_dietary_icon') == 'on'
+        settings.show_photo_icon = request.POST.get('show_photo_icon') == 'on'
+        
+        settings.save()
+        
+        # Return JSON response for AJAX
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({'success': True, 'message': 'Settings saved successfully'})
+        
+        # Redirect back to preview page
+        return redirect('label_preview')
+    
+    return redirect('label_preview')
+
+
+def api_label_settings(request):
+    """API endpoint to get current label settings"""
+    from .models import LabelSettings
+    
+    settings = LabelSettings.get_settings()
+    return JsonResponse({
+        'label_width': settings.label_width,
+        'label_height': settings.label_height,
+        'font_scale': settings.font_scale,
+        'auto_print_on_checkin': settings.auto_print_on_checkin,
+        'printer_name': settings.printer_name,
+        'show_medical_icon': settings.show_medical_icon,
+        'show_dietary_icon': settings.show_dietary_icon,
+        'show_photo_icon': settings.show_photo_icon,
+    })
+
+
+def api_toggle_printing(request):
+    """API endpoint to toggle automatic printing on check-in"""
+    if request.method == 'POST':
+        from .models import LabelSettings
+        
+        settings = LabelSettings.get_settings()
+        settings.auto_print_on_checkin = not settings.auto_print_on_checkin
+        settings.save()
+        
+        return JsonResponse({
+            'success': True,
+            'auto_print_on_checkin': settings.auto_print_on_checkin,
+            'message': f"Auto-printing {'enabled' if settings.auto_print_on_checkin else 'disabled'}"
+        })
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+
+@login_required
+def print_child_label(request, child_id):
+    """Print a single child label"""
+    from .models import Child
+    from .label_printer import BrotherQL700Printer
+    from .models import LabelSettings
+    
+    child = get_object_or_404(Child, id=child_id)
+    
+    # Check if user has permission to print this child's label
+    if hasattr(request.user, 'parentprofile'):
+        # Parent can only print their own children's labels
+        if child.parent != request.user.parentprofile:
+            messages.error(request, 'You can only print labels for your own children.')
+            return redirect('dashboard')
+    elif not (hasattr(request.user, 'teacherprofile') or request.user.is_staff):
+        # Only teachers/staff can print any child's label
+        messages.error(request, 'You do not have permission to print labels.')
+        return redirect('dashboard')
+    
+    # Get printer settings
+    settings = LabelSettings.get_settings()
+    
+    if not settings.printer_name:
+        messages.error(request, 'No printer configured. Please configure a printer in label settings.')
+        return redirect('label_preview')
+    
+    try:
+        # Create printer instance and print label
+        printer = BrotherQL700Printer(settings.printer_name)
+        success = printer.print_child_label(child)
+        
+        if success:
+            messages.success(request, f'Label printed successfully for {child.first_name} {child.last_name}')
+        else:
+            messages.error(request, f'Failed to print label for {child.first_name} {child.last_name}. Please check printer connection.')
+            
+    except Exception as e:
+        messages.error(request, f'Error printing label: {str(e)}')
+    
+    # Redirect back to appropriate page
+    if hasattr(request.user, 'parentprofile'):
+        return redirect('dashboard')
+    else:
+        return redirect('teacher_dashboard')
 
 
 @login_required

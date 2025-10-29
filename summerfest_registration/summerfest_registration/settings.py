@@ -128,3 +128,37 @@ MEDIA_ROOT = '/home/atkinsondp/summerfest_registration/summerfest_registration/m
 MEDIA_URL = '/media/'
 STATIC_ROOT = '/home/atkinsondp/summerfest_registration/summerfest_registration/static'
 STATIC_URL = '/static/'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/home/atkinsondp/debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+import os
+
+# Stripe API Keys
+STRIPE_SECRET_KEY_TEST = os.environ.get('STRIPE_SECRET_KEY_TEST', '')
+STRIPE_PUBLISHABLE_KEY_TEST = os.environ.get('STRIPE_PUBLISHABLE_KEY_TEST', '')
+STRIPE_SECRET_KEY_LIVE = os.environ.get('STRIPE_SECRET_KEY_LIVE', '')
+STRIPE_PUBLISHABLE_KEY_LIVE = os.environ.get('STRIPE_PUBLISHABLE_KEY_LIVE', '')
+STRIPE_WEBHOOK_SECRET_TEST = os.environ.get('STRIPE_WEBHOOK_SECRET_TEST', '')
+STRIPE_WEBHOOK_SECRET_LIVE = os.environ.get('STRIPE_WEBHOOK_SECRET_LIVE', '')
+
+# Payment settings
+PAYMENT_CURRENCY = 'AUD'
+ONLINE_PAYMENT_BONUS_MULTIPLIER = '1.20'

@@ -4,6 +4,7 @@ Handles Stripe payments, manual payments, and payment tracking
 """
 
 import stripe
+import decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
@@ -13,18 +14,15 @@ from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from decimal import Decimal
 from .models import ParentProfile, PaymentAccount, PaymentTransaction, DailyAttendanceCharge
 from .forms import AddFundsForm, ManualPaymentForm
-
-# Stripe API key will be set per request using stripe_utils
 
 
 def get_or_create_payment_account(parent_profile):
     """Get or create payment account for parent"""
     account, created = PaymentAccount.objects.get_or_create(
         parent_profile=parent_profile,
-        defaults={'balance': Decimal('0.00')}
+        defaults={'balance': decimal.Decimal('0.00')}
     )
     return account
 
@@ -37,26 +35,26 @@ def payment_dashboard(request):
     except ParentProfile.DoesNotExist:
         messages.error(request, 'Please complete your registration first.')
         return redirect('parent_register')
-    
+
     # Get or create payment account
     payment_account = get_or_create_payment_account(parent_profile)
-    
+
     # Get recent transactions
     recent_transactions = payment_account.transactions.all()[:10]
-    
+
     # Get daily charges
     daily_charges = payment_account.daily_charges.all()[:10]
-    
+
     # Children list for display
     children = parent_profile.children.all()
-    
+
     context = {
         'payment_account': payment_account,
         'recent_transactions': recent_transactions,
         'daily_charges': daily_charges,
         'children': children,
     }
-    
+
     return render(request, 'registration/payment_dashboard.html', context)
 
 
@@ -68,14 +66,14 @@ def add_funds(request):
     except ParentProfile.DoesNotExist:
         messages.error(request, 'Please complete your registration first.')
         return redirect('parent_register')
-    
+
     payment_account = get_or_create_payment_account(parent_profile)
-    
+
     if request.method == 'POST':
         form = AddFundsForm(request.POST)
         if form.is_valid():
             amount = form.get_amount()
-            
+
             # Determine Stripe keys/mode
             from .stripe_utils import get_stripe_mode_from_request, get_stripe_keys
             mode = get_stripe_mode_from_request(request)
@@ -84,12 +82,12 @@ def add_funds(request):
 
             # Compute credited amount for display
             try:
-                from decimal import Decimal
-                bonus_multiplier = Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
+                bonus_multiplier = decimal.Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
             except Exception:
-                bonus_multiplier = Decimal('1.20')
-            credited_amount = (amount * bonus_multiplier).quantize(Decimal('0.01'))
-            
+                bonus_multiplier = decimal.Decimal('1.20')
+
+            credited_amount = (amount * bonus_multiplier).quantize(decimal.Decimal('0.01'))
+
             # Create Stripe checkout session
             try:
                 checkout_session = stripe.checkout.Session.create(
@@ -125,7 +123,7 @@ def add_funds(request):
                 messages.error(request, f'Payment error: {str(e)}')
     else:
         form = AddFundsForm()
-    
+
     # Provide current mode/publishable key for display if needed
     try:
         from .stripe_utils import get_stripe_mode_from_request, get_stripe_keys
@@ -134,13 +132,12 @@ def add_funds(request):
         public_key = keys['publishable']
     except Exception:
         public_key = settings.STRIPE_PUBLISHABLE_KEY
-    
+
     # Bonus multiplier for UI
     try:
-        from decimal import Decimal
-        bonus_multiplier = Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
+        bonus_multiplier = decimal.Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
     except Exception:
-        bonus_multiplier = Decimal('1.20')
+        bonus_multiplier = decimal.Decimal('1.20')
 
     return render(request, 'registration/add_funds.html', {
         'form': form,
@@ -157,11 +154,9 @@ def payment_success(request):
     if not session_id:
         messages.error(request, 'Invalid payment session.')
         return redirect('payment_dashboard')
-    
+
     try:
-        # Retrieve session with correct Stripe key by mode stored in metadata
         from .stripe_utils import get_stripe_keys
-        # We need a temporary key to retrieve the session. Try both keys if needed.
         keys_candidates = [
             get_stripe_keys('live'),
             get_stripe_keys('test')
@@ -177,59 +172,57 @@ def payment_success(request):
         if not session:
             messages.error(request, 'Could not verify payment session.')
             return redirect('payment_dashboard')
-        
+
         if session.payment_status == 'paid':
-            # Get parent profile from metadata
             parent_profile_id = session.metadata.get('parent_profile_id')
-            amount = Decimal(session.metadata.get('amount'))
-            
+            amount = decimal.Decimal(session.metadata.get('amount'))
+
             parent_profile = get_object_or_404(ParentProfile, id=parent_profile_id)
             payment_account = get_or_create_payment_account(parent_profile)
-            
-            # Check if we've already processed this payment
+
             existing_transaction = PaymentTransaction.objects.filter(
                 stripe_payment_intent_id=session.payment_intent
             ).first()
-            
-            if not existing_transaction:
-                # Apply online payment bonus
-                from decimal import Decimal
-                try:
-                    bonus_multiplier = Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
-                except Exception:
-                    bonus_multiplier = Decimal('1.00')
-                credited_amount = (amount * bonus_multiplier).quantize(Decimal('0.01'))
 
-                # Add credited funds to account
+            if not existing_transaction:
+                try:
+                    bonus_multiplier = decimal.Decimal(settings.ONLINE_PAYMENT_BONUS_MULTIPLIER)
+                except Exception:
+                    bonus_multiplier = decimal.Decimal('1.00')
+
+                credited_amount = (amount * bonus_multiplier).quantize(decimal.Decimal('0.01'))
+
                 payment_account.add_funds(
                     credited_amount,
                     f"Online card payment ${amount} (credited ${credited_amount})"
                 )
-                
-                # Update transaction with Stripe details (find by credited amount and description)
+
                 transaction = payment_account.transactions.filter(
                     amount=credited_amount,
                     description=f"Online card payment ${amount} (credited ${credited_amount})"
                 ).first()
-                
+
                 if transaction:
                     transaction.stripe_payment_intent_id = session.payment_intent
                     transaction.payment_method = 'stripe'
                     transaction.save()
-                
-                messages.success(request, f'Payment successful! You paid ${amount}, we credited ${credited_amount} to your account as an online bonus.')
+
+                messages.success(
+                    request,
+                    f'Payment successful! You paid ${amount}, we credited ${credited_amount} to your account as an online bonus.'
+                )
             else:
                 messages.info(request, 'This payment has already been processed.')
         else:
             messages.error(request, 'Payment was not completed successfully.')
-            
+
     except stripe.error.StripeError as e:
         messages.error(request, f'Payment verification error: {str(e)}')
-    
+
     return redirect('payment_dashboard')
 
 
-@login_required 
+@login_required
 def payment_cancel(request):
     """Handle cancelled payment"""
     messages.warning(request, 'Payment was cancelled.')
@@ -242,12 +235,9 @@ def manual_payment(request):
     """Record manual payments (cash/eftpos) by staff"""
     parent_profile = None
     search_info = None
-    
-    # Check if we're coming from manual sign-in with parent info
     from_sign_in_parent = request.GET.get('parent_username')
-    
+
     if request.method == 'POST':
-        # Streamlined payment recording - no separate lookup step
         form = ManualPaymentForm(request.POST)
         if form.is_valid():
             parent_profile = form.get_parent_profile()
@@ -255,42 +245,34 @@ def manual_payment(request):
                 amount = form.cleaned_data['amount']
                 payment_method = form.cleaned_data['payment_method']
                 notes = form.cleaned_data['notes']
-                
-                # Get payment account
+
                 payment_account = get_or_create_payment_account(parent_profile)
-                
-                # Add funds
+
                 description = f"{payment_method.upper()} payment"
                 if notes:
                     description += f" - {notes}"
-                
+
                 payment_account.add_funds(amount, description)
-                
-                # Update transaction with staff details
+
                 transaction = payment_account.transactions.first()
                 transaction.payment_method = payment_method
                 transaction.recorded_by = request.user
                 transaction.save()
-                
-                messages.success(request, f'${amount} {payment_method.upper()} payment recorded for {parent_profile.first_name} {parent_profile.last_name}. New balance: ${payment_account.balance}')
-                
-                # Clear form for next entry
+
+                messages.success(
+                    request,
+                    f'${amount} {payment_method.upper()} payment recorded for {parent_profile.first_name} {parent_profile.last_name}. New balance: ${payment_account.balance}'
+                )
+
                 form = ManualPaymentForm()
                 parent_profile = None
                 search_info = None
             else:
                 messages.error(request, "Please select a parent from the dropdown.")
-        else:
-            # Form is invalid - show errors
-            parent_profile = None
-            search_info = None
     else:
-        # GET request - check if pre-populating from manual sign-in
         initial_data = {}
         if from_sign_in_parent:
             initial_data['parent_username'] = from_sign_in_parent
-            
-            # Try to auto-populate parent info
             try:
                 user = User.objects.get(username=from_sign_in_parent)
                 if hasattr(user, 'parentprofile'):
@@ -302,15 +284,15 @@ def manual_payment(request):
                     }
             except User.DoesNotExist:
                 messages.warning(request, f"Could not find parent with username '{from_sign_in_parent}'.")
-        
+
         form = ManualPaymentForm(initial=initial_data)
-    
+
     context = {
         'form': form,
         'parent_profile': parent_profile,
         'search_info': search_info
     }
-    
+
     return render(request, 'registration/manual_payment.html', context)
 
 
@@ -320,7 +302,7 @@ def payment_lookup(request):
     """Quick payment account lookup for staff"""
     parent_profile = None
     payment_account = None
-    
+
     username = request.GET.get('username')
     if username:
         try:
@@ -330,7 +312,7 @@ def payment_lookup(request):
                 payment_account = get_or_create_payment_account(parent_profile)
         except User.DoesNotExist:
             messages.error(request, f'User "{username}" not found.')
-    
+
     return render(request, 'registration/payment_lookup.html', {
         'parent_profile': parent_profile,
         'payment_account': payment_account,
@@ -344,8 +326,7 @@ def stripe_webhook(request):
     """Handle Stripe webhooks for both live and test modes."""
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-    
-    # Try verifying with live first, then test
+
     event = None
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
@@ -354,15 +335,12 @@ def stripe_webhook(request):
             event = stripe.Webhook.construct_event(payload, sig_header, getattr(settings, 'STRIPE_WEBHOOK_SECRET_TEST', ''))
         except Exception:
             return HttpResponse(status=400)
-    
-    # Handle the event
+
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
-        # Payment success is already handled in payment_success view
         pass
     elif event['type'] == 'payment_intent.succeeded':
         payment_intent = event['data']['object']
-        # Update transaction if needed
         pass
-    
+
     return HttpResponse(status=200)

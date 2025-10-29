@@ -24,22 +24,42 @@
         border-color: #e6bd36;
         color: #000;
     }
-    .logo-img {
-        max-width: 450px; /* adjust to taste */
-        margin-bottom: 1rem;
-    }
-</style>
 
+
+    /* New section styling */
+    .dates-section {
+        background-color: #fffbea;
+        border: 2px solid #FFD23F;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-top: -2rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .dates-section h2 {
+        color: #333;
+        font-weight: 700;
+    }
+    .dates-section ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    .dates-section li::before {
+        content: "🌞 ";
+    }
+
+    .shadow-strong {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+
+</style>
 
 <div class="hero-section">
     <div class="container text-center">
-<!-- Summerfest logo -->
         <img src="https://i.postimg.cc/mDHPsx0n/Summerfest450.png" alt="Summerfest Logo" class="logo-img">
-<h1 class="display-4 mb-4" style="color: #FFD23F;">
-    <i class="bi bi-sun"></i> Welcome to Summerfest 2026!
-</h1>
-
-
+        <h1 class="display-4 mb-4" style="color: #FFD23F;">
+            <i class="bi bi-sun"></i> Welcome to Summerfest 2026!
+        </h1>
         <p class="lead mb-4" style="color: #FFD23F;">
             Register your children for an amazing summer program at Lighthouse Church
         </p>
@@ -58,6 +78,51 @@
     </div>
 </div>
 
+<!-- UPDATED DATES & COSTS SECTION -->
+<div class="container my-5">
+  <div class="row justify-content-center g-4">
+    <!-- Left Box: Dates -->
+    <div class="col-md-6">
+      <div class="p-4 rounded shadow-strong h-100 text-center" style="background-color:#fffbea; border:2px solid #FFD23F;">
+        <h3 class="mb-3"><i class="bi bi-calendar-event"></i> Program Dates</h3>
+        <ul class="list-unstyled mb-0">
+          <li class="mb-3">
+            <span style="font-weight:700; border-bottom:0px solid #FFD23F; padding-bottom:2px;">
+              Wednesday 14 – Saturday 17 January 2026
+            </span><br>
+            Kids Summerfest program & Parents Café
+          </li>
+          <li>
+            <span style="font-weight:700; border-bottom:0px solid #FFD23F; padding-bottom:2px;">
+              Sunday 18 January 2026
+            </span><br>
+            Kids Summerfest Celebration: combined Kids Church & Parents Service
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right Box: Costs & Call to Action -->
+    <div class="col-md-6 justify-content-center">
+      <div class="p-4 rounded shadow-strong h-100 text-center" style="background-color:#fffbea; border:2px solid #FFD23F;">
+        <h3 class="mb-3"><i class="bi bi-cash-coin"></i> Costs</h3>
+        <ul class="list-unstyled mb-4">
+          <li>$6 per child per day</li>
+          <li>$12 per family per day</li>
+          <li>Sunday is free for everyone!</li>
+        </ul>
+        <p class="mb-4">
+          Save with our <strong>discounted rate</strong> when you pre-pay online.
+        </p>
+        <a href="{% url 'parent_register' %}" class="btn btn-primary btn-lg">
+          <i class="bi bi-credit-card"></i> Pre-pay Online
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END UPDATED SECTION -->
+
 <div class="container py-5">
     <div class="row">
         <div class="col-lg-4 col-md-6 mb-4">
@@ -66,40 +131,40 @@
                     <i class="bi bi-people feature-icon mb-3"></i>
                     <h4 class="card-title">Easy Registration</h4>
                     <p class="card-text">
-                        Quick and simple registration process for parents and guardians. 
+                        Quick and simple registration process for parents and guardians.
                         Register once and manage your children's details year after year.
                     </p>
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card h-100 text-center">
                 <div class="card-body">
                     <i class="bi bi-qr-code feature-icon mb-3"></i>
                     <h4 class="card-title">QR Code Check-in</h4>
                     <p class="card-text">
-                        Each child gets a unique QR code for quick and easy attendance tracking. 
+                        Each child gets a unique QR code for quick and easy attendance tracking.
                         Simply scan on arrival for instant check-in.
                     </p>
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card h-100 text-center">
                 <div class="card-body">
                     <i class="bi bi-shield-check feature-icon mb-3"></i>
                     <h4 class="card-title">Safe & Secure</h4>
                     <p class="card-text">
-                        Complete medical and emergency contact information ensures your child's 
+                        Complete medical and emergency contact information ensures your child's
                         safety. Teachers have instant access to important details.
                     </p>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <div class="row mt-5">
         <div class="col-md-6">
             <h3><i class="bi bi-calendar-event"></i> Program Classes</h3>
@@ -126,7 +191,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6">
             <h3><i class="bi bi-info-circle"></i> What You Need</h3>
             <ul class="list-unstyled">
@@ -135,7 +200,7 @@
                 <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Child's medical and dietary requirements</li>
                 <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Consent for first aid and photos</li>
             </ul>
-            
+
             {% if not user.is_authenticated %}
                 <div class="mt-4">
                     <a href="{% url 'parent_register' %}" class="btn btn-primary btn-lg">
